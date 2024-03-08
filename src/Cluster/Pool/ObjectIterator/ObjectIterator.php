@@ -6,7 +6,7 @@ use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Exception\ObjectIteratorException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\WrappedType;
+use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
 use Iterator;
@@ -31,7 +31,7 @@ class ObjectIterator extends WrappedType implements Iterator
     {
         $ffi = $ioContext->getFFI();
         $result = $ffi->new('rados_list_ctx_t');
-        ObjectIteratorException::handle($ffi->rados_nobjects_list_open($ioContext->getData(), FFI::addr($result)));
+        ObjectIteratorException::handle($ffi->rados_nobjects_list_open($ioContext->getCData(), FFI::addr($result)));
         return new static($ioContext, $result, $ffi);
     }
 
@@ -62,7 +62,7 @@ class ObjectIterator extends WrappedType implements Iterator
      */
     public function getPgHashPosition(): int
     {
-        return $this->ffi->rados_nobjects_list_get_pg_hash_position($this->getData());
+        return $this->ffi->rados_nobjects_list_get_pg_hash_position($this->getCData());
     }
 
     /**
@@ -76,7 +76,7 @@ class ObjectIterator extends WrappedType implements Iterator
      */
     public function seekHashPosition(int $position): int
     {
-        $result = $this->ffi->rados_nobjects_list_seek($this->getData(), $position);
+        $result = $this->ffi->rados_nobjects_list_seek($this->getCData(), $position);
         $this->end = $this->getCursorPosition()->isAtEnd();
         return $result;
     }
@@ -91,7 +91,7 @@ class ObjectIterator extends WrappedType implements Iterator
      */
     public function seekCursor(ObjectIteratorCursor $cursor): int
     {
-        $result = $this->ffi->rados_nobjects_list_seek_cursor($this->getData(), $cursor->getData());
+        $result = $this->ffi->rados_nobjects_list_seek_cursor($this->getCData(), $cursor->getCData());
         $this->end = $cursor->isAtEnd();
         return $result;
     }
@@ -108,7 +108,7 @@ class ObjectIterator extends WrappedType implements Iterator
     public function getCursorPosition(): ObjectIteratorCursor
     {
         $result = $this->ffi->new('rados_object_list_cursor');
-        ObjectIteratorException::handle($this->ffi->rados_nobjects_list_get_cursor($this->getData(), FFI::addr($result)));
+        ObjectIteratorException::handle($this->ffi->rados_nobjects_list_get_cursor($this->getCData(), FFI::addr($result)));
         return new ObjectIteratorCursor($this->ioContext, $result, $this->ffi);
     }
 
@@ -125,7 +125,7 @@ class ObjectIterator extends WrappedType implements Iterator
         $entry = $this->ffi->new('char*');
         $key = $this->ffi->new('char*');
         $namespace = $this->ffi->new('char*');
-        ObjectIteratorException::handle($this->ffi->rados_nobjects_list_next($this->getData(), FFI::addr($entry), FFI::addr($key), FFI::addr($namespace)));
+        ObjectIteratorException::handle($this->ffi->rados_nobjects_list_next($this->getCData(), FFI::addr($entry), FFI::addr($key), FFI::addr($namespace)));
         return new RadosObject(
             FFI::string($entry),
             !FFI::isNull($key) ? FFI::string($key) : null,
@@ -144,7 +144,7 @@ class ObjectIterator extends WrappedType implements Iterator
      */
     public function close(): static
     {
-        $this->ffi->rados_nobjects_list_close($this->getData());
+        $this->ffi->rados_nobjects_list_close($this->getCData());
         $this->closed = true;
         return $this;
     }

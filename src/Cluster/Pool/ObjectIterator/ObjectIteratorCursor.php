@@ -4,7 +4,7 @@ namespace Aternos\Rados\Cluster\Pool\ObjectIterator;
 
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Exception\ObjectIteratorException;
-use Aternos\Rados\WrappedType;
+use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
 
@@ -26,7 +26,7 @@ class ObjectIteratorCursor extends WrappedType
     public static function getAtBeginning(IOContext $ioContext): ObjectIteratorCursor
     {
         $ffi = $ioContext->getFFI();
-        $result = $ffi->rados_object_list_begin($ioContext->getData());
+        $result = $ffi->rados_object_list_begin($ioContext->getCData());
         if ($result === null) {
             throw new ObjectIteratorException("Failed to get object list cursor");
         }
@@ -47,7 +47,7 @@ class ObjectIteratorCursor extends WrappedType
     public static function getAtEnd(IOContext $ioContext): ObjectIteratorCursor
     {
         $ffi = $ioContext->getFFI();
-        $result = $ffi->rados_object_list_end($ioContext->getData());
+        $result = $ffi->rados_object_list_end($ioContext->getCData());
         if ($result === null) {
             throw new ObjectIteratorException("Failed to get object list cursor");
         }
@@ -80,7 +80,7 @@ class ObjectIteratorCursor extends WrappedType
      */
     public function free(): static
     {
-        $this->ffi->rados_object_list_cursor_free($this->ioContext->getData(), $this->getData());
+        $this->ffi->rados_object_list_cursor_free($this->ioContext->getCData(), $this->getCData());
         $this->closed = true;
         return $this;
     }
@@ -94,7 +94,7 @@ class ObjectIteratorCursor extends WrappedType
      */
     public function isAtEnd(): bool
     {
-        return (bool)$this->ffi->rados_object_list_is_end($this->ioContext->getData(), $this->getData());
+        return (bool)$this->ffi->rados_object_list_is_end($this->ioContext->getCData(), $this->getCData());
     }
 
     /**
@@ -110,6 +110,6 @@ class ObjectIteratorCursor extends WrappedType
      */
     public function compare(ObjectIteratorCursor $other): int
     {
-        return $this->ffi->rados_object_list_cursor_cmp($this->ioContext->getData(), $this->getData(), $other->getData());
+        return $this->ffi->rados_object_list_cursor_cmp($this->ioContext->getCData(), $this->getCData(), $other->getCData());
     }
 }

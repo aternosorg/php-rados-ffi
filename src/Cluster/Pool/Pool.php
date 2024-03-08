@@ -3,10 +3,11 @@
 namespace Aternos\Rados\Cluster\Pool;
 
 use Aternos\Rados\Cluster\Cluster;
-use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\PoolException;
+use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\WrappedType;
+use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
 use InvalidArgumentException;
@@ -29,7 +30,7 @@ class Pool extends WrappedType
      */
     public static function lookup(Cluster $cluster, string $name): int
     {
-        return PoolException::handle($cluster->getFFI()->rados_pool_lookup($cluster->getData(), $name));
+        return PoolException::handle($cluster->getFFI()->rados_pool_lookup($cluster->getCData(), $name));
     }
 
     /**
@@ -48,12 +49,12 @@ class Pool extends WrappedType
         $length = $step;
         $ffi = $cluster->getFFI();
         do {
-            $buffer = $ffi->new(FFI::arrayType($ffi->type("char"), [$length]));
-            $res = $ffi->rados_pool_reverse_lookup($cluster->getData(), $id, $buffer, $length);
+            $buffer = Buffer::create($ffi, $length);
+            $res = $ffi->rados_pool_reverse_lookup($cluster->getCData(), $id, $buffer->getCData(), $length);
             $length += $step;
         } while ($res < 0 && -$res === Errno::ERANGE->value);
         $resultLength = PoolException::handle($res);
-        return FFI::string($buffer, $resultLength);
+        return $buffer->readString($resultLength);
     }
 
     /**
@@ -128,7 +129,7 @@ class Pool extends WrappedType
     public function getBaseTier(): int
     {
         $result = $this->ffi->new("int64_t");
-        PoolException::handle($this->ffi->rados_pool_get_base_tier($this->getData(), $this->getId(), FFI::addr($result)));
+        PoolException::handle($this->ffi->rados_pool_get_base_tier($this->getCData(), $this->getId(), FFI::addr($result)));
         return $result->cdata;
     }
 
@@ -145,7 +146,7 @@ class Pool extends WrappedType
      */
     public function delete(): static
     {
-        PoolException::handle($this->ffi->rados_pool_delete($this->getData(), $this->getName()));
+        PoolException::handle($this->ffi->rados_pool_delete($this->getCData(), $this->getName()));
         return $this;
     }
 
@@ -163,9 +164,9 @@ class Pool extends WrappedType
     {
         $context = $this->ffi->new("rados_ioctx_t");
         if ($this->id !== null) {
-            PoolException::handle($this->ffi->rados_ioctx_create2($this->getData(), $this->id, FFI::addr($context)));
+            PoolException::handle($this->ffi->rados_ioctx_create2($this->getCData(), $this->id, FFI::addr($context)));
         } else {
-            PoolException::handle($this->ffi->rados_ioctx_create($this->getData(), $this->getName(), FFI::addr($context)));
+            PoolException::handle($this->ffi->rados_ioctx_create($this->getCData(), $this->getName(), FFI::addr($context)));
         }
         return new IOContext($this, $context, $this->ffi);
     }

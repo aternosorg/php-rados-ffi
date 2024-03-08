@@ -3,7 +3,7 @@
 
 namespace Aternos\Rados\Cluster\Pool;
 
-use Aternos\Rados\WrappedType;
+use Aternos\Rados\Util\WrappedType;
 
 class PoolStat extends WrappedType
 {
@@ -13,7 +13,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumBytes(): int
     {
-        return $this->getData()->num_bytes;
+        return $this->getCData()->num_bytes;
     }
 
     /**
@@ -22,7 +22,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumKb(): int
     {
-        return $this->getData()->num_kb;
+        return $this->getCData()->num_kb;
     }
 
     /**
@@ -31,7 +31,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumObjects(): int
     {
-        return $this->getData()->num_objects;
+        return $this->getCData()->num_objects;
     }
 
     /**
@@ -40,7 +40,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumObjectClones(): int
     {
-        return $this->getData()->num_object_clones;
+        return $this->getCData()->num_object_clones;
     }
 
     /**
@@ -49,7 +49,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumObjectCopies(): int
     {
-        return $this->getData()->num_object_copies;
+        return $this->getCData()->num_object_copies;
     }
 
     /**
@@ -58,7 +58,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumObjectsMissingOnPrimary(): int
     {
-        return $this->getData()->num_objects_missing_on_primary;
+        return $this->getCData()->num_objects_missing_on_primary;
     }
 
     /**
@@ -67,7 +67,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumObjectsUnfound(): int
     {
-        return $this->getData()->num_objects_unfound;
+        return $this->getCData()->num_objects_unfound;
     }
 
     /**
@@ -77,7 +77,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumObjectsDegraded(): int
     {
-        return $this->getData()->num_objects_degraded;
+        return $this->getCData()->num_objects_degraded;
     }
 
     /**
@@ -86,7 +86,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumRd(): int
     {
-        return $this->getData()->num_rd;
+        return $this->getCData()->num_rd;
     }
 
     /**
@@ -95,7 +95,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumRdKb(): int
     {
-        return $this->getData()->num_rd_kb;
+        return $this->getCData()->num_rd_kb;
     }
 
     /**
@@ -104,7 +104,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumWr(): int
     {
-        return $this->getData()->num_wr;
+        return $this->getCData()->num_wr;
     }
 
     /**
@@ -113,7 +113,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumWrKb(): int
     {
-        return $this->getData()->num_wr_kb;
+        return $this->getCData()->num_wr_kb;
     }
 
     /**
@@ -122,7 +122,7 @@ class PoolStat extends WrappedType
      */
     protected function getNumUserBytes(): int
     {
-        return $this->getData()->num_user_bytes;
+        return $this->getCData()->num_user_bytes;
     }
 
     /**
@@ -131,7 +131,7 @@ class PoolStat extends WrappedType
      */
     protected function getCompressedBytesOrig(): int
     {
-        return $this->getData()->compressed_bytes_orig;
+        return $this->getCData()->compressed_bytes_orig;
     }
 
     /**
@@ -140,7 +140,7 @@ class PoolStat extends WrappedType
      */
     protected function getCompressedBytes(): int
     {
-        return $this->getData()->compressed_bytes;
+        return $this->getCData()->compressed_bytes;
     }
 
     /**
@@ -149,6 +149,6 @@ class PoolStat extends WrappedType
      */
     protected function getCompressedBytesAlloc(): int
     {
-        return $this->getData()->compressed_bytes_alloc;
+        return $this->getCData()->compressed_bytes_alloc;
     }
 }

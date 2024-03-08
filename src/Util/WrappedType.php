@@ -1,6 +1,6 @@
 <?php
 
-namespace Aternos\Rados;
+namespace Aternos\Rados\Util;
 
 use FFI;
 use FFI\CData;
@@ -39,13 +39,13 @@ class WrappedType
     }
 
     /**
-     * @param CData $buffer
+     * @param Buffer $buffer
      * @param int $length
      * @return string[]
      */
-    protected static function parseNullTerminatedStringList(CData $buffer, int $length): array
+    protected static function parseNullTerminatedStringList(Buffer $buffer, int $length): array
     {
-        $parts = explode("\0", FFI::string($buffer, $length));
+        $parts = explode("\0", $buffer->readString($length));
         $result = [];
         foreach ($parts as $part) {
             if ($part === "") {
@@ -69,7 +69,7 @@ class WrappedType
     /**
      * @return CData
      */
-    public function getData(): CData
+    public function getCData(): CData
     {
         return $this->data;
     }

@@ -6,7 +6,8 @@ use Aternos\Rados\Cluster\Pool\Pool;
 use Aternos\Rados\Exception\ClusterException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\WrappedType;
+use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\WrappedType;
 use Exception;
 use FFI;
 
@@ -70,7 +71,7 @@ class Cluster extends WrappedType
     public static function createWithContext(FFI $ffi, ClusterConfig $config): static
     {
         $cluster = $ffi->new("rados_t");
-        ClusterException::handle($ffi->rados_create_with_context(FFI::addr($cluster), $config->getData()));
+        ClusterException::handle($ffi->rados_create_with_context(FFI::addr($cluster), $config->getCData()));
         return new static($cluster, $ffi);
     }
 
@@ -99,7 +100,7 @@ class Cluster extends WrappedType
     {
         $outStr = $this->ffi->new("char*");
         $outStrLen = $this->ffi->new("size_t");
-        RadosException::handle($this->ffi->rados_ping_monitor($this->getData(), $monitorId, FFI::addr($outStr), FFI::addr($outStrLen)));
+        RadosException::handle($this->ffi->rados_ping_monitor($this->getCData(), $monitorId, FFI::addr($outStr), FFI::addr($outStrLen)));
         $result = FFI::string($outStr, $outStrLen->cdata);
         $this->ffi->rados_buffer_free($outStr);
         return $result;
@@ -125,7 +126,7 @@ class Cluster extends WrappedType
      */
     public function configReadFile(?string $path): static
     {
-        ClusterException::handle($this->ffi->rados_conf_read_file($this->getData(), $path));
+        ClusterException::handle($this->ffi->rados_conf_read_file($this->getCData(), $path));
         return $this;
     }
 
@@ -148,7 +149,7 @@ class Cluster extends WrappedType
      */
     public function connect(): static
     {
-        ClusterException::handle($this->ffi->rados_connect($this->getData()));
+        ClusterException::handle($this->ffi->rados_connect($this->getCData()));
         $this->connected = true;
         return $this;
     }
@@ -175,7 +176,7 @@ class Cluster extends WrappedType
      */
     public function shutdown(): static
     {
-        $this->ffi->rados_shutdown($this->getData());
+        $this->ffi->rados_shutdown($this->getCData());
         $this->connected = false;
         return $this;
     }
@@ -202,7 +203,7 @@ class Cluster extends WrappedType
     {
         $argv = static::createStringArray($this->ffi, $args);
         try {
-            ClusterException::handle($this->ffi->rados_conf_parse_argv($this->getData(), count($args), $argv));
+            ClusterException::handle($this->ffi->rados_conf_parse_argv($this->getCData(), count($args), $argv));
         } catch (Exception $e) {
             static::freeStringArray($argv);
             throw $e;
@@ -231,7 +232,7 @@ class Cluster extends WrappedType
         $remainder = $this->ffi->new(FFI::arrayType($this->ffi->type("char*"), [count($args)]));
 
         try {
-            ClusterException::handle($this->ffi->rados_conf_parse_argv_remainder($this->getData(), count($args), $argv, $remainder));
+            ClusterException::handle($this->ffi->rados_conf_parse_argv_remainder($this->getCData(), count($args), $argv, $remainder));
         } catch (Exception $e) {
             static::freeStringArray($argv);
             throw $e;
@@ -267,7 +268,7 @@ class Cluster extends WrappedType
      */
     public function configParseEnv(string $envVar): static
     {
-        ClusterException::handle($this->ffi->rados_conf_parse_env($this->getData(), $envVar));
+        ClusterException::handle($this->ffi->rados_conf_parse_env($this->getCData(), $envVar));
         return $this;
     }
 
@@ -285,7 +286,7 @@ class Cluster extends WrappedType
      */
     public function configSet(string $option, string $value): static
     {
-        ClusterException::handle($this->ffi->rados_conf_set($this->getData(), $option, $value));
+        ClusterException::handle($this->ffi->rados_conf_set($this->getCData(), $option, $value));
         return $this;
     }
 
@@ -303,12 +304,12 @@ class Cluster extends WrappedType
         $step = 512;
         $length = $step;
         do {
-            $buffer = $this->ffi->new(FFI::arrayType($this->ffi->type("char"), [$length]));
-            $res = $this->ffi->rados_conf_get($this->getData(), $option, $buffer, $length);
+            $buffer = Buffer::create($this->ffi, $length);
+            $res = $this->ffi->rados_conf_get($this->getCData(), $option, $buffer->getCData(), $length);
             $length += $step;
         } while ($res < 0 && -$res === Errno::ENAMETOOLONG->value);
         ClusterException::handle($res);
-        return FFI::string($buffer);
+        return $buffer->readString();
     }
 
     /**
@@ -326,7 +327,7 @@ class Cluster extends WrappedType
     public function clusterStat(): ClusterStat
     {
         $stat = $this->ffi->new("struct rados_cluster_stat_t");
-        ClusterException::handle($this->ffi->rados_cluster_stat($this->getData(), FFI::addr($stat)));
+        ClusterException::handle($this->ffi->rados_cluster_stat($this->getCData(), FFI::addr($stat)));
         return new ClusterStat($stat, $this->ffi);
     }
 
@@ -345,12 +346,12 @@ class Cluster extends WrappedType
         $step = 512;
         $length = 37;
         do {
-            $buffer = $this->ffi->new(FFI::arrayType($this->ffi->type("char"), [$length]));
-            $res = $this->ffi->rados_cluster_fsid($this->getData(), $buffer, $length);
+            $buffer = Buffer::create($this->ffi, $length);
+            $res = $this->ffi->rados_cluster_fsid($this->getCData(), $buffer->getCData(), $length);
             $length += $step;
         } while (-$res === Errno::ERANGE->value);
         ClusterException::handle($res);
-        return FFI::string($buffer);
+        return $buffer->readString();
     }
 
     /**
@@ -363,7 +364,7 @@ class Cluster extends WrappedType
      */
     public function waitForLatestOsdMap(): static
     {
-        ClusterException::handle($this->ffi->rados_wait_for_latest_osdmap($this->getData()));
+        ClusterException::handle($this->ffi->rados_wait_for_latest_osdmap($this->getCData()));
         return $this;
     }
 
@@ -379,9 +380,9 @@ class Cluster extends WrappedType
      */
     public function listPools(): array
     {
-        $length = ClusterException::handle($this->ffi->rados_pool_list($this->getData(), null, 0));
-        $buffer = $this->ffi->new(FFI::arrayType($this->ffi->type("char"), [$length]));
-        ClusterException::handle($this->ffi->rados_pool_list($this->getData(), $buffer, $length));
+        $length = ClusterException::handle($this->ffi->rados_pool_list($this->getCData(), null, 0));
+        $buffer = Buffer::create($this->ffi, $length);
+        ClusterException::handle($this->ffi->rados_pool_list($this->getCData(), $buffer->getCData(), $length));
 
         return static::parseNullTerminatedStringList($buffer, $length);
     }
@@ -397,9 +398,9 @@ class Cluster extends WrappedType
      */
     public function listInconsistentPG(int $poolId): array
     {
-        $length = ClusterException::handle($this->ffi->rados_inconsistent_pg_list($this->getData(), $poolId, null, 0));
-        $buffer = $this->ffi->new(FFI::arrayType($this->ffi->type("char"), [$length]));
-        ClusterException::handle($this->ffi->rados_inconsistent_pg_list($this->getData(), $poolId, $buffer, $length));
+        $length = ClusterException::handle($this->ffi->rados_inconsistent_pg_list($this->getCData(), $poolId, null, 0));
+        $buffer = Buffer::create($this->ffi, $length);
+        ClusterException::handle($this->ffi->rados_inconsistent_pg_list($this->getCData(), $poolId, $buffer->getCData(), $length));
 
         return static::parseNullTerminatedStringList($buffer, $length);
     }
@@ -415,7 +416,7 @@ class Cluster extends WrappedType
      */
     public function getConfigHandle(): ClusterConfig
     {
-        return new ClusterConfig($this->ffi->rados_cct($this->getData()), $this->ffi);
+        return new ClusterConfig($this->ffi->rados_cct($this->getCData()), $this->ffi);
     }
 
     /**
@@ -429,7 +430,7 @@ class Cluster extends WrappedType
      */
     public function getInstanceId(): int
     {
-        return $this->ffi->rados_get_instance_id($this->getData());
+        return $this->ffi->rados_get_instance_id($this->getCData());
     }
 
     /**
@@ -443,7 +444,7 @@ class Cluster extends WrappedType
     public function getMinCompatibleOsd(): int
     {
         $result = $this->ffi->new("int8_t");
-        ClusterException::handle($this->ffi->rados_get_min_compatible_osd($this->getData(), FFI::addr($result)));
+        ClusterException::handle($this->ffi->rados_get_min_compatible_osd($this->getCData(), FFI::addr($result)));
         return $result->cdata;
     }
 
@@ -459,7 +460,7 @@ class Cluster extends WrappedType
     {
         $minVersion = $this->ffi->new("int8_t");
         $requiredMinVersion = $this->ffi->new("int8_t");
-        ClusterException::handle($this->ffi->rados_get_min_compatible_client($this->getData(), FFI::addr($minVersion), FFI::addr($requiredMinVersion)));
+        ClusterException::handle($this->ffi->rados_get_min_compatible_client($this->getCData(), FFI::addr($minVersion), FFI::addr($requiredMinVersion)));
         return new ClientVersionRequirement($minVersion->cdata, $requiredMinVersion->cdata);
     }
 
@@ -475,8 +476,8 @@ class Cluster extends WrappedType
      */
     public function createPool(string $name): Pool
     {
-        ClusterException::handle($this->ffi->rados_pool_create($this->getData(), $name));
-        return new Pool($this, $name, null, $this->getData(), $this->ffi);
+        ClusterException::handle($this->ffi->rados_pool_create($this->getCData(), $name));
+        return new Pool($this, $name, null, $this->getCData(), $this->ffi);
     }
 
     /**
@@ -491,8 +492,8 @@ class Cluster extends WrappedType
      */
     public function createPoolWithCrushRule(string $name, int $crushRuleNumber): Pool
     {
-        ClusterException::handle($this->ffi->rados_pool_create_with_crush_rule($this->getData(), $name, $crushRuleNumber));
-        return new Pool($this, $name, null, $this->getData(), $this->ffi);
+        ClusterException::handle($this->ffi->rados_pool_create_with_crush_rule($this->getCData(), $name, $crushRuleNumber));
+        return new Pool($this, $name, null, $this->getCData(), $this->ffi);
     }
 
     /**
@@ -504,7 +505,7 @@ class Cluster extends WrappedType
      */
     public function getPool(string $name): Pool
     {
-        return new Pool($this, $name, Pool::lookup($this, $name), $this->getData(), $this->ffi);
+        return new Pool($this, $name, Pool::lookup($this, $name), $this->getCData(), $this->ffi);
     }
 
     /**
@@ -516,6 +517,6 @@ class Cluster extends WrappedType
      */
     public function getPoolById(int $id): Pool
     {
-        return new Pool($this, Pool::reverseLookup($this, $id), $id, $this->getData(), $this->ffi);
+        return new Pool($this, Pool::reverseLookup($this, $id), $id, $this->getCData(), $this->ffi);
     }
 }

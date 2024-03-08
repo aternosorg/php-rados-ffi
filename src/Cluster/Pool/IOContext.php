@@ -8,7 +8,8 @@ use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectIterator;
 use Aternos\Rados\Exception\IOContextException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\WrappedType;
+use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
 
@@ -67,7 +68,7 @@ class IOContext extends WrappedType
      */
     public function destroy(): static
     {
-        $this->ffi->rados_ioctx_destroy($this->getData());
+        $this->ffi->rados_ioctx_destroy($this->getCData());
         $this->closed = true;
         return $this;
     }
@@ -81,7 +82,7 @@ class IOContext extends WrappedType
      */
     public function getConfigHandle(): ClusterConfig
     {
-        return new ClusterConfig($this->ffi->rados_ioctx_cct($this->getData()), $this->ffi);
+        return new ClusterConfig($this->ffi->rados_ioctx_cct($this->getCData()), $this->ffi);
     }
 
     /**
@@ -105,7 +106,7 @@ class IOContext extends WrappedType
     public function poolStat(): PoolStat
     {
         $stat = $this->ffi->new("struct rados_pool_stat_t");
-        IOContextException::handle($this->ffi->rados_ioctx_pool_stat($this->getData(), FFI::addr($stat)));
+        IOContextException::handle($this->ffi->rados_ioctx_pool_stat($this->getCData(), FFI::addr($stat)));
         return new PoolStat($stat, $this->ffi);
     }
 
@@ -120,7 +121,7 @@ class IOContext extends WrappedType
     public function getPoolRequiresAlignment(): bool
     {
         $result = $this->ffi->new("int");
-        IOContextException::handle($this->ffi->rados_ioctx_pool_requires_alignment2($this->getData(), FFI::addr($result)));
+        IOContextException::handle($this->ffi->rados_ioctx_pool_requires_alignment2($this->getCData(), FFI::addr($result)));
         return (bool)$result->cdata;
     }
 
@@ -135,7 +136,7 @@ class IOContext extends WrappedType
     public function getPoolRequiredAlignment(): int
     {
         $result = $this->ffi->new("uint64_t");
-        IOContextException::handle($this->ffi->rados_ioctx_pool_required_alignment2($this->getData(), FFI::addr($result)));
+        IOContextException::handle($this->ffi->rados_ioctx_pool_required_alignment2($this->getCData(), FFI::addr($result)));
         return $result->cdata;
     }
 
@@ -154,7 +155,7 @@ class IOContext extends WrappedType
      */
     public function setLocatorKey(?string $key): static
     {
-        $this->ffi->rados_ioctx_locator_set_key($this->getData(), $key);
+        $this->ffi->rados_ioctx_locator_set_key($this->getCData(), $key);
         return $this;
     }
 
@@ -172,7 +173,7 @@ class IOContext extends WrappedType
      */
     public function setNamespace(?string $namespace): static
     {
-        $this->ffi->rados_ioctx_set_namespace($this->getData(), $namespace);
+        $this->ffi->rados_ioctx_set_namespace($this->getCData(), $namespace);
         return $this;
     }
 
@@ -189,12 +190,12 @@ class IOContext extends WrappedType
         $step = 512;
         $length = $step;
         do {
-            $buffer = $this->ffi->new(FFI::arrayType($this->ffi->type("char"), [$length]));
-            $res = $this->ffi->rados_ioctx_get_namespace($this->getData(), $buffer, $length);
+            $buffer = Buffer::create($this->ffi, $length);
+            $res = $this->ffi->rados_ioctx_get_namespace($this->getCData(), $buffer->getCData(), $length);
             $length += $step;
         } while (-$res === Errno::ERANGE->value);
         IOContextException::handle($res);
-        return FFI::string($buffer);
+        return $buffer->readString();
     }
 
     /**
@@ -220,7 +221,7 @@ class IOContext extends WrappedType
      */
     public function getLastVersion(): int
     {
-        return $this->ffi->rados_get_last_version($this->getData());
+        return $this->ffi->rados_get_last_version($this->getCData());
     }
 
     /**
@@ -236,7 +237,7 @@ class IOContext extends WrappedType
      */
     public function write(string $objectId, string $buffer, int $offset): static
     {
-        IOContextException::handle($this->ffi->rados_write($this->getData(), $objectId, $buffer, strlen($buffer), $offset));
+        IOContextException::handle($this->ffi->rados_write($this->getCData(), $objectId, $buffer, strlen($buffer), $offset));
         return $this;
     }
 
@@ -255,7 +256,7 @@ class IOContext extends WrappedType
      */
     public function writeFull(string $objectId, string $buffer): static
     {
-        IOContextException::handle($this->ffi->rados_write_full($this->getData(), $objectId, $buffer, strlen($buffer)));
+        IOContextException::handle($this->ffi->rados_write_full($this->getCData(), $objectId, $buffer, strlen($buffer)));
         return $this;
     }
 
@@ -275,7 +276,7 @@ class IOContext extends WrappedType
      */
     public function writeSame(string $objectId, string $buffer, int $writeLength, int $offset): static
     {
-        IOContextException::handle($this->ffi->rados_writesame($this->getData(), $objectId, $buffer, strlen($buffer), $writeLength, $offset));
+        IOContextException::handle($this->ffi->rados_writesame($this->getCData(), $objectId, $buffer, strlen($buffer), $writeLength, $offset));
         return $this;
     }
 
@@ -291,7 +292,7 @@ class IOContext extends WrappedType
      */
     public function append(string $objectId, string $buffer): static
     {
-        IOContextException::handle($this->ffi->rados_append($this->getData(), $objectId, $buffer, strlen($buffer)));
+        IOContextException::handle($this->ffi->rados_append($this->getCData(), $objectId, $buffer, strlen($buffer)));
         return $this;
     }
 
@@ -304,14 +305,21 @@ class IOContext extends WrappedType
      * @param string $objectId - the name of the object to read from
      * @param int $length - the number of bytes to read
      * @param int $offset - the offset to start reading from in the object
+     * @param Buffer|null $readBuffer - Optional: temporary buffer to read into.
+     *  Reusing a buffer for multiple reads can reduce memory usage and improve performance.
      * @return string
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function read(string $objectId, int $length, int $offset): string
+    public function read(string $objectId, int $length, int $offset, ?Buffer $readBuffer = null): string
     {
-        $buffer = $this->ffi->new(FFI::arrayType($this->ffi->type("char"), [$length]));
-        $readLength = IOContextException::handle($this->ffi->rados_read($this->getData(), $objectId, $buffer, $length, $offset));
-        return FFI::string($buffer, $readLength);
+        if ($readBuffer !== null && $readBuffer->getSize() >= $length) {
+            $buffer = $readBuffer;
+        } else {
+            $buffer = Buffer::create($this->ffi, $length);
+        }
+
+        $readLength = IOContextException::handle($this->ffi->rados_read($this->getCData(), $objectId, $buffer->getCData(), $length, $offset));
+        return $buffer->readString($readLength);
     }
 }

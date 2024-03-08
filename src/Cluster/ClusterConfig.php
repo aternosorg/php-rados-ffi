@@ -2,7 +2,7 @@
 
 namespace Aternos\Rados\Cluster;
 
-use Aternos\Rados\WrappedType;
+use Aternos\Rados\Util\WrappedType;
 
 /**
  * A handle for the ceph configuration context for the rados_t cluster

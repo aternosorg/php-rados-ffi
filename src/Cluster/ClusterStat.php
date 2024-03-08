@@ -3,7 +3,7 @@
 
 namespace Aternos\Rados\Cluster;
 
-use Aternos\Rados\WrappedType;
+use Aternos\Rados\Util\WrappedType;
 
 class ClusterStat extends WrappedType
 {
@@ -13,7 +13,7 @@ class ClusterStat extends WrappedType
      */
     public function getNumObjects(): int
     {
-        return $this->getData()->numObjects;
+        return $this->getCData()->numObjects;
     }
 
     /**
@@ -22,7 +22,7 @@ class ClusterStat extends WrappedType
      */
     public function getKb(): int
     {
-        return $this->getData()->kb;
+        return $this->getCData()->kb;
     }
 
     /**
@@ -31,7 +31,7 @@ class ClusterStat extends WrappedType
      */
     public function getKbUsed(): int
     {
-        return $this->getData()->kb_used;
+        return $this->getCData()->kb_used;
     }
 
     /**
@@ -40,6 +40,6 @@ class ClusterStat extends WrappedType
      */
     public function getKbAvail(): int
     {
-        return $this->getData()->kb_avail;
+        return $this->getCData()->kb_avail;
     }
 }
