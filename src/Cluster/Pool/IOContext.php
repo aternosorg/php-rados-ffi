@@ -9,9 +9,11 @@ use Aternos\Rados\Exception\IOContextException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
 use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\ChecksumType;
 use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
+use InvalidArgumentException;
 
 class IOContext extends WrappedType
 {
@@ -297,6 +299,7 @@ class IOContext extends WrappedType
     }
 
     /**
+     * Binding for rados_read
      * Read data from an object
      *
      * The io context determines the snapshot to read from, if any was set
@@ -321,5 +324,88 @@ class IOContext extends WrappedType
 
         $readLength = IOContextException::handle($this->ffi->rados_read($this->getCData(), $objectId, $buffer->getCData(), $length, $offset));
         return $buffer->readString($readLength);
+    }
+
+    /**
+     * Binding for rados_checksum
+     * Compute checksum from object data
+     *
+     * The io context determines the snapshot to checksum, if any was set
+     * by rados_ioctx_snap_set_read().
+     *
+     * @param string $objectId - the name of the object to checksum
+     * @param ChecksumType $type - the checksum algorithm to utilize
+     * @param int $initValue - the init value for the algorithm
+     * @param int $length - the number of bytes to checksum
+     * @param int $offset - the offset to start checksumming in the object
+     * @param int|null $chunkSize - length-aligned chunk size for checksums
+     * @return string[] - array of checksums, one for each chunk
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function checksum(string $objectId, ChecksumType $type, int $initValue, int $length, int $offset, ?int $chunkSize = null): array
+    {
+        $checksumLength = $type->getLength();
+        $initString = pack($type->getPackFormat(), $initValue);
+
+        if ($chunkSize === null) {
+            $chunkSize = $length;
+        }
+
+        if ($chunkSize <= 0) {
+            throw new InvalidArgumentException("Chunk size must be greater than 0");
+        }
+
+        $resultCount = ceil($length / $chunkSize);
+        $resultLength = $resultCount * $checksumLength + 4;
+
+        $checksumBuffer = Buffer::create($this->ffi, $resultLength);
+        IOContextException::handle($this->ffi->rados_checksum(
+            $this->getCData(), $objectId,
+            $type->getCValue($this->ffi),
+            $initString, $checksumLength,
+            $length, $offset, $chunkSize,
+            $checksumBuffer->getCData(), $resultLength
+        ));
+
+        $resString = $checksumBuffer->toString();
+        $actualResultCount = unpack("V", $resString)[1];
+        return array_values(unpack("V" . $actualResultCount, substr($resString, 4)));
+    }
+
+    /**
+     * Binding for rados_remove
+     * Delete an object
+     *
+     * @note This does not delete any snapshots of the object.
+     *
+     * @param string $objectId
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function remove(string $objectId): static
+    {
+        IOContextException::handle($this->ffi->rados_remove($this->getCData(), $objectId));
+        return $this;
+    }
+
+    /**
+     * Binding for rados_trunc
+     * Resize an object
+     *
+     * If this enlarges the object, the new area is logically filled with
+     * zeroes. If this shrinks the object, the excess data is removed.
+     *
+     * @param string $objectId - the name of the object
+     * @param int $size - the new size of the object in bytes
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function truncate(string $objectId, int $size): static
+    {
+        IOContextException::handle($this->ffi->rados_trunc($this->getCData(), $objectId, $size));
+        return $this;
     }
 }
