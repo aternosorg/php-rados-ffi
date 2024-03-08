@@ -1,0 +1,23 @@
+{
+    "name": "aternos/php-rados-ffi",
+    "description": "Rados bindings for PHP using FFI",
+    "type": "library",
+    "require": {
+        "ext-ffi": "*"
+    },
+    "suggest": {
+        "ext-posix": "Resolve error codes to strings"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Aternos\\Rados\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Kurt Thiemann",
+            "email": "kurt@aternos.org"
+        }
+    ]
+}

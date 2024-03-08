@@ -1,0 +1,22 @@
+<?php
+
+namespace Aternos\Rados\Generated;
+
+enum Errno: int
+{
+{{constants}}
+
+    /**
+     * @param int $errno
+     * @return string|null
+     */
+    static function getErrorName(int $errno): ?string
+    {
+        foreach (self::cases() as $error) {
+            if ($error->value === $errno) {
+                return $error->name;
+            }
+        }
+        return null;
+    }
+}
