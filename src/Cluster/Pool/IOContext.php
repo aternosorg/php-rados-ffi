@@ -5,6 +5,12 @@ namespace Aternos\Rados\Cluster\Pool;
 use Aternos\Rados\Cluster\Cluster;
 use Aternos\Rados\Cluster\ClusterConfig;
 use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectIterator;
+use Aternos\Rados\Completion\CompareOperationCompletion;
+use Aternos\Rados\Completion\FlushOperationCompletion;
+use Aternos\Rados\Completion\ReadOperationCompletion;
+use Aternos\Rados\Completion\RemoveOperationCompletion;
+use Aternos\Rados\Completion\StatOperationCompletion;
+use Aternos\Rados\Completion\WriteOperationCompletion;
 use Aternos\Rados\Exception\IOContextException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
@@ -443,5 +449,203 @@ class IOContext extends WrappedType
     {
         /** @noinspection PhpUnhandledExceptionInspection */
         $this->destroy();
+    }
+
+    /**
+     * Binding for rados_aio_read
+     * Asynchronously read data from an object
+     *
+     * The io context determines the snapshot to read from, if any was set
+     * by rados_ioctx_snap_set_read().
+     *
+     * @param string $objectId
+     * @param int $length
+     * @param int $offset
+     * @param Buffer|null $readBuffer
+     * @return ReadOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function readAsync(string $objectId, int $length, int $offset, ?Buffer $readBuffer = null): ReadOperationCompletion
+    {
+        if ($readBuffer !== null && $readBuffer->getSize() >= $length) {
+            $buffer = $readBuffer;
+        } else {
+            $buffer = Buffer::create($this->ffi, $length);
+        }
+
+        $completion = new ReadOperationCompletion($buffer, $this);
+        IOContextException::handle($this->ffi->rados_aio_read($this->getCData(), $objectId, $completion->getCData(), $buffer->getCData(), $length, $offset));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_write
+     * Write data to an object asynchronously
+     *
+     * @param string $objectId - name of the object
+     * @param string $buffer - data to write
+     * @param int $offset - offset to start writing at
+     * @return WriteOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function writeAsync(string $objectId, string $buffer, int $offset): WriteOperationCompletion
+    {
+        $completion = new WriteOperationCompletion($this);
+        IOContextException::handle($this->ffi->rados_aio_write($this->getCData(), $objectId, $completion->getCData(), $buffer, strlen($buffer), $offset));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_append
+     * Asynchronously append data to an object
+     *
+     * @param string $objectId - name of the object
+     * @param string $buffer - data to append
+     * @return WriteOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function appendAsync(string $objectId, string $buffer): WriteOperationCompletion
+    {
+        $completion = new WriteOperationCompletion($this);
+        IOContextException::handle($this->ffi->rados_aio_append($this->getCData(), $objectId, $completion->getCData(), $buffer, strlen($buffer)));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_write_full
+     * Asynchronously write an entire object
+     *
+     * The object is filled with the provided data. If the object exists,
+     * it is atomically truncated and then written.
+     *
+     * @param string $objectId - name of the object
+     * @param string $buffer - data to write
+     * @return WriteOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function writeFullAsync(string $objectId, string $buffer): WriteOperationCompletion
+    {
+        $completion = new WriteOperationCompletion($this);
+        IOContextException::handle($this->ffi->rados_aio_write_full(
+            $this->getCData(), $objectId,
+            $completion->getCData(),
+            $buffer, strlen($buffer)
+        ));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_writesame
+     * Asynchronously write the same buffer multiple times.
+     * $writeLength bytes are written in total, which must be
+     * a multiple of the buffer size.
+     *
+     * @param string $objectId - name of the object
+     * @param string $buffer - data to write
+     * @param int $writeLength - the total number of bytes to write
+     * @param int $offset - byte offset in the object to begin writing at
+     * @return WriteOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function writeSameAsync(string $objectId, string $buffer, int $writeLength, int $offset): WriteOperationCompletion
+    {
+        $completion = new WriteOperationCompletion($this);
+        IOContextException::handle($this->ffi->rados_aio_writesame(
+            $this->getCData(), $objectId,
+            $completion->getCData(),
+            $buffer, strlen($buffer),
+            $writeLength, $offset
+        ));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_remove
+     * Asynchronously remove an object
+     *
+     * @param string $objectId - name of the object
+     * @return RemoveOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function removeAsync(string $objectId): RemoveOperationCompletion
+    {
+        $completion = new RemoveOperationCompletion($this);
+        IOContextException::handle($this->ffi->rados_aio_remove($this->getCData(), $objectId, $completion->getCData()));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_flush
+     * Block until all pending writes in an io context are safe
+     *
+     * This is not equivalent to calling waitForSafe() on all
+     * write completions, since this waits for the associated callbacks to
+     * complete as well.
+     *
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function flushAsyncWrites(): static
+    {
+        IOContextException::handle($this->ffi->rados_aio_flush($this->getCData()));
+        return $this;
+    }
+
+    /**
+     * Binding for rados_aio_flush_async
+     * Flush all pending writes in an io context asynchronously
+     *
+     * @return FlushOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function flushAsyncWritesAsync(): FlushOperationCompletion
+    {
+        $completion = new FlushOperationCompletion($this);
+        IOContextException::handle($this->ffi->rados_aio_flush_async($this->getCData(), $completion->getCData()));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_stat
+     * Asynchronously get object stats (size/mtime)
+     *
+     * @param string $objectId - name of the object
+     * @return StatOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function statAsync(string $objectId): StatOperationCompletion
+    {
+        $size = $this->ffi->new("uint64_t");
+        $mtime = $this->ffi->new("time_t");
+        $completion = new StatOperationCompletion($size, $mtime, $this);
+        IOContextException::handle($this->ffi->rados_aio_stat($this->getCData(), $objectId, $completion->getCData(), FFI::addr($size), FFI::addr($mtime)));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_cmpext
+     * Asynchronously compare an on-disk object range with a buffer
+     *
+     * @param string $objectId - name of the object
+     * @param string $compare - buffer containing bytes to be compared with object contents
+     * @param int $offset - object byte offset at which to start the comparison
+     * @return CompareOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function compareExtAsync(string $objectId, string $compare, int $offset): CompareOperationCompletion
+    {
+        $completion = new CompareOperationCompletion($this);
+        IOContextException::handle($this->ffi->rados_aio_cmpext($this->getCData(), $objectId, $completion->getCData(), $compare, strlen($compare), $offset));
+        return $completion;
     }
 }

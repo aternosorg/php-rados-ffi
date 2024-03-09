@@ -2,6 +2,7 @@
 
 namespace Aternos\Rados\Util;
 
+use Aternos\Rados\Exception\RadosException;
 use FFI;
 use FFI\CData;
 
@@ -40,6 +41,7 @@ class Buffer extends WrappedType
      * Convert this buffer to a string
      *
      * @return string
+     * @throws RadosException
      */
     public function toString(): string
     {
@@ -52,9 +54,18 @@ class Buffer extends WrappedType
      *
      * @param int|null $length
      * @return string
+     * @throws RadosException
      */
     public function readString(?int $length = null): string
     {
         return FFI::string($this->getCData(), $length);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function releaseCData(): void
+    {
+        //No manual release needed
     }
 }

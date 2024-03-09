@@ -14,7 +14,7 @@ use Iterator;
 class ObjectIterator extends WrappedType implements Iterator
 {
     protected IOContext $ioContext;
-    protected ?RadosObject $current = null;
+    protected ?ObjectIteratorEntry $current = null;
     protected bool $end = false;
 
     /**
@@ -111,17 +111,17 @@ class ObjectIterator extends WrappedType implements Iterator
      * Binding for rados_nobjects_list_next
      * Get the next object name and locator in the pool
      *
-     * @return RadosObject
+     * @return ObjectIteratorEntry
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    protected function getNextEntry(): RadosObject
+    protected function getNextEntry(): ObjectIteratorEntry
     {
         $entry = $this->ffi->new('char*');
         $key = $this->ffi->new('char*');
         $namespace = $this->ffi->new('char*');
         ObjectIteratorException::handle($this->ffi->rados_nobjects_list_next($this->getCData(), FFI::addr($entry), FFI::addr($key), FFI::addr($namespace)));
-        return new RadosObject(
+        return new ObjectIteratorEntry(
             FFI::string($entry),
             !FFI::isNull($key) ? FFI::string($key) : null,
             !FFI::isNull($namespace) ? FFI::string($namespace) : null
@@ -146,10 +146,10 @@ class ObjectIterator extends WrappedType implements Iterator
     }
 
     /**
-     * @return RadosObject
+     * @return ObjectIteratorEntry
      * @throws RadosException
      */
-    public function current(): RadosObject
+    public function current(): ObjectIteratorEntry
     {
         if ($this->current === null && !$this->end) {
             $this->next();

@@ -2,9 +2,12 @@
 
 namespace Aternos\Rados\Completion;
 
+use Aternos\Rados\Exception\CompletionException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Util\WrappedType;
+use Closure;
 use FFI;
+use FFI\CData;
 
 class Completion extends WrappedType
 {
@@ -23,6 +26,22 @@ class Completion extends WrappedType
         $result = $ffi->new("rados_completion_t");
         $ffi->rados_aio_create_completion2(null, null, FFI::addr($result));
         return new static($result, $ffi);
+    }
+
+    /**
+     * Binding for rados_aio_create_completion2
+     * Constructs a completion to use with asynchronous operations
+     *
+     * @note This library currently does not support setting callbacks for completions
+     *
+     * @param FFI $ffi
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function __construct(FFI $ffi)
+    {
+        $result = $ffi->new("rados_completion_t");
+        $ffi->rados_aio_create_completion2(null, null, FFI::addr($result));
+        parent::__construct($result, $ffi);
     }
 
     /**

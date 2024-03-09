@@ -2,7 +2,7 @@
 
 namespace Aternos\Rados\Cluster\Pool\ObjectIterator;
 
-class RadosObject
+class ObjectIteratorEntry
 {
     /**
      * @param string $entry
