@@ -3,17 +3,46 @@
 
 namespace Aternos\Rados\Cluster;
 
-use Aternos\Rados\Util\WrappedType;
+use FFI\CData;
 
-class ClusterStat extends WrappedType
+class ClusterStat
 {
+    /**
+     * @param CData $data - CData of type rados_cluster_stat_t
+     * @return static
+     */
+    public static function fromStatCData(CData $data): static
+    {
+        return new static(
+            $data->num_objects,
+            $data->kb,
+            $data->kb_used,
+            $data->kb_avail
+        );
+    }
+
+    /**
+     * @param int $numObjects
+     * @param int $kb
+     * @param int $kbUsed
+     * @param int $kbAvail
+     */
+    public function __construct(
+        protected int $numObjects,
+        protected int $kb,
+        protected int $kbUsed,
+        protected int $kbAvail
+    )
+    {
+    }
+
     /**
      * Number of objects
      * @return int
      */
     public function getNumObjects(): int
     {
-        return $this->getCData()->numObjects;
+        return $this->numObjects;
     }
 
     /**
@@ -22,7 +51,7 @@ class ClusterStat extends WrappedType
      */
     public function getKb(): int
     {
-        return $this->getCData()->kb;
+        return $this->kb;
     }
 
     /**
@@ -31,7 +60,7 @@ class ClusterStat extends WrappedType
      */
     public function getKbUsed(): int
     {
-        return $this->getCData()->kb_used;
+        return $this->kbUsed;
     }
 
     /**
@@ -40,6 +69,6 @@ class ClusterStat extends WrappedType
      */
     public function getKbAvail(): int
     {
-        return $this->getCData()->kb_avail;
+        return $this->kbAvail;
     }
 }

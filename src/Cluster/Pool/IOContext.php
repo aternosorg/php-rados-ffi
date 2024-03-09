@@ -10,6 +10,7 @@ use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
 use Aternos\Rados\Util\Buffer;
 use Aternos\Rados\Util\ChecksumType;
+use Aternos\Rados\Util\Constants;
 use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
@@ -18,7 +19,6 @@ use InvalidArgumentException;
 class IOContext extends WrappedType
 {
     protected Pool $pool;
-    protected bool $closed = false;
 
     /**
      * @param Pool $pool
@@ -27,15 +27,9 @@ class IOContext extends WrappedType
      */
     public function __construct(Pool $pool, CData $data, FFI $ffi)
     {
-        $this->pool = $pool;
         parent::__construct($data, $ffi);
-    }
-
-    public function __destruct()
-    {
-        if (!$this->closed) {
-            $this->destroy();
-        }
+        $this->pool = $pool;
+        $this->pool->registerChildObject($this);
     }
 
     /**
@@ -67,11 +61,12 @@ class IOContext extends WrappedType
      *
      * @return $this
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
+     * @internal This method is called by the release method and should not be called manually
      */
-    public function destroy(): static
+    protected function destroy(): static
     {
-        $this->ffi->rados_ioctx_destroy($this->getCData());
-        $this->closed = true;
+        $this->ffi->rados_ioctx_destroy($this->getCDataUnsafe());
         return $this;
     }
 
@@ -81,10 +76,11 @@ class IOContext extends WrappedType
      *
      * @return ClusterConfig - rados_config_t for this cluster
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function getConfigHandle(): ClusterConfig
     {
-        return new ClusterConfig($this->ffi->rados_ioctx_cct($this->getCData()), $this->ffi);
+        return new ClusterConfig($this->getCluster(), $this->ffi->rados_ioctx_cct($this->getCData()), $this->ffi);
     }
 
     /**
@@ -109,7 +105,7 @@ class IOContext extends WrappedType
     {
         $stat = $this->ffi->new("struct rados_pool_stat_t");
         IOContextException::handle($this->ffi->rados_ioctx_pool_stat($this->getCData(), FFI::addr($stat)));
-        return new PoolStat($stat, $this->ffi);
+        return PoolStat::fromStatCData($stat);
     }
 
     /**
@@ -154,6 +150,7 @@ class IOContext extends WrappedType
      * @param string|null $key - the key to use as the object locator, or NULL to discard any previously set key
      * @return $this
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function setLocatorKey(?string $key): static
     {
@@ -172,6 +169,7 @@ class IOContext extends WrappedType
      * @param string|null $namespace - the name to use as the namespace, or NULL use the default namespace
      * @return $this
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function setNamespace(?string $namespace): static
     {
@@ -220,6 +218,7 @@ class IOContext extends WrappedType
      *
      * @return int
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function getLastVersion(): int
     {
@@ -407,5 +406,42 @@ class IOContext extends WrappedType
     {
         IOContextException::handle($this->ffi->rados_trunc($this->getCData(), $objectId, $size));
         return $this;
+    }
+
+    /**
+     * Binding for rados_cmpext
+     * Compare an on-disk object range with a buffer
+     *
+     * @param string $objectId - name of the object
+     * @param string $compare - buffer containing bytes to be compared with object contents
+     * @param int $offset - object byte offset at which to start the comparison
+     * @return true|int - true on match, offset of mismatch on failure
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function compareExt(string $objectId, string $compare, int $offset): true|int
+    {
+        $result = IOContextException::handle($this->ffi->rados_cmpext($this->getCData(), $objectId, $compare, strlen($compare), $offset));
+        if ($result === 0) {
+            return true;
+        }
+        return -$result - Constants::MAX_ERRNO;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isValid(): bool
+    {
+        return parent::isValid() && $this->getCluster()->isValid();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function releaseCData(): void
+    {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $this->destroy();
     }
 }

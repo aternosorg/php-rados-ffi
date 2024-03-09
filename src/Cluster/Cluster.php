@@ -75,13 +75,6 @@ class Cluster extends WrappedType
         return new static($cluster, $ffi);
     }
 
-    public function __destruct()
-    {
-        if ($this->connected) {
-            $this->shutdown();
-        }
-    }
-
     /**
      * Binding for rados_ping_monitor
      * Ping the monitor with ID mon_id
@@ -173,8 +166,10 @@ class Cluster extends WrappedType
      *
      * @return $this
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
+     * @internal This method is called by the release method and should not be called manually
      */
-    public function shutdown(): static
+    protected function shutdown(): static
     {
         $this->ffi->rados_shutdown($this->getCData());
         $this->connected = false;
@@ -328,7 +323,7 @@ class Cluster extends WrappedType
     {
         $stat = $this->ffi->new("struct rados_cluster_stat_t");
         ClusterException::handle($this->ffi->rados_cluster_stat($this->getCData(), FFI::addr($stat)));
-        return new ClusterStat($stat, $this->ffi);
+        return ClusterStat::fromStatCData($stat);
     }
 
     /**
@@ -409,14 +404,15 @@ class Cluster extends WrappedType
      * Binding for rados_cct
      * Get a configuration handle for a rados cluster handle
      *
-     *  This handle is valid only as long as the cluster handle is valid.
+     * This handle is valid only as long as the cluster handle is valid.
      *
      * @return ClusterConfig
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function getConfigHandle(): ClusterConfig
     {
-        return new ClusterConfig($this->ffi->rados_cct($this->getCData()), $this->ffi);
+        return new ClusterConfig($this, $this->ffi->rados_cct($this->getCData()), $this->ffi);
     }
 
     /**
@@ -427,6 +423,7 @@ class Cluster extends WrappedType
      *
      * @return int
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function getInstanceId(): int
     {
@@ -505,7 +502,7 @@ class Cluster extends WrappedType
      */
     public function getPool(string $name): Pool
     {
-        return new Pool($this, $name, Pool::lookup($this, $name), $this->getCData(), $this->ffi);
+        return new Pool($this, $name, null, $this->getCData(), $this->ffi);
     }
 
     /**
@@ -517,6 +514,23 @@ class Cluster extends WrappedType
      */
     public function getPoolById(int $id): Pool
     {
-        return new Pool($this, Pool::reverseLookup($this, $id), $id, $this->getCData(), $this->ffi);
+        return new Pool($this, null, $id, $this->getCData(), $this->ffi);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isConnected(): bool
+    {
+        return $this->connected;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function releaseCData(): void
+    {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $this->shutdown();
     }
 }

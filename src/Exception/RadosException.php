@@ -3,6 +3,7 @@
 namespace Aternos\Rados\Exception;
 
 use Aternos\Rados\Generated\Errno;
+use Aternos\Rados\Util\Constants;
 
 class RadosException extends \Exception
 {
@@ -27,7 +28,7 @@ class RadosException extends \Exception
      */
     public static function handle(int $code): int
     {
-        if ($code < 0) {
+        if ($code < 0 && $code >= -Constants::MAX_ERRNO) {
             throw static::fromErrorCode($code);
         }
         return $code;

@@ -14,7 +14,6 @@ use Iterator;
 class ObjectIterator extends WrappedType implements Iterator
 {
     protected IOContext $ioContext;
-    protected bool $closed = false;
     protected ?RadosObject $current = null;
     protected bool $end = false;
 
@@ -44,13 +43,7 @@ class ObjectIterator extends WrappedType implements Iterator
     {
         parent::__construct($data, $ffi);
         $this->ioContext = $ioContext;
-    }
-
-    public function __destruct()
-    {
-        if (!$this->closed) {
-            $this->close();
-        }
+        $this->ioContext->registerChildObject($this);
     }
 
     /**
@@ -59,6 +52,7 @@ class ObjectIterator extends WrappedType implements Iterator
      *
      * @return int - current hash position, rounded to the current pg
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function getPgHashPosition(): int
     {
@@ -88,6 +82,7 @@ class ObjectIterator extends WrappedType implements Iterator
      * @param ObjectIteratorCursor $cursor
      * @return int - rounded position we moved to
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function seekCursor(ObjectIteratorCursor $cursor): int
     {
@@ -141,11 +136,12 @@ class ObjectIterator extends WrappedType implements Iterator
      *
      * @return $this
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
+     * @internal This method is called by the release method and should not be called manually
      */
-    public function close(): static
+    protected function close(): static
     {
-        $this->ffi->rados_nobjects_list_close($this->getCData());
-        $this->closed = true;
+        $this->ffi->rados_nobjects_list_close($this->getCDataUnsafe());
         return $this;
     }
 
@@ -192,16 +188,33 @@ class ObjectIterator extends WrappedType implements Iterator
      */
     public function valid(): bool
     {
-        return !$this->end && !$this->closed;
+        return $this->isValid() && !$this->end;
     }
 
     /**
      * @return void
-     * @throws ObjectIteratorException
+     * @throws ObjectIteratorException|RadosException
      */
     public function rewind(): void
     {
         $cursor = ObjectIteratorCursor::getAtBeginning($this->ioContext);
         $this->seekCursor($cursor);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isValid(): bool
+    {
+        return parent::isValid() && $this->ioContext->isValid();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function releaseCData(): void
+    {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $this->close();
     }
 }

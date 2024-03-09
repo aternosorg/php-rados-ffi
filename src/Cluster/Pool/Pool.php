@@ -69,10 +69,11 @@ class Pool extends WrappedType
         if ($name === null && $id === null) {
             throw new InvalidArgumentException("Either name or id must be set");
         }
+        parent::__construct($data, $ffi);
         $this->cluster = $cluster;
         $this->name = $name;
         $this->id = $id;
-        parent::__construct($data, $ffi);
+        $this->cluster->registerChildObject($this);
     }
 
     /**
@@ -169,5 +170,13 @@ class Pool extends WrappedType
             PoolException::handle($this->ffi->rados_ioctx_create($this->getCData(), $this->getName(), FFI::addr($context)));
         }
         return new IOContext($this, $context, $this->ffi);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function releaseCData(): void
+    {
+        // Pool just refers to the cluster context, so no separate release is needed
     }
 }

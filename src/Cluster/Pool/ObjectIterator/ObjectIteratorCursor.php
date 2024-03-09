@@ -4,13 +4,13 @@ namespace Aternos\Rados\Cluster\Pool\ObjectIterator;
 
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Exception\ObjectIteratorException;
+use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
 
 class ObjectIteratorCursor extends WrappedType
 {
-    protected bool $closed = false;
 
     /**
      * Binding for rados_object_list_begin
@@ -20,7 +20,7 @@ class ObjectIteratorCursor extends WrappedType
      *
      * @param IOContext $ioContext
      * @return ObjectIteratorCursor
-     * @throws ObjectIteratorException
+     * @throws ObjectIteratorException|RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
     public static function getAtBeginning(IOContext $ioContext): ObjectIteratorCursor
@@ -41,7 +41,7 @@ class ObjectIteratorCursor extends WrappedType
      *
      * @param IOContext $ioContext
      * @return ObjectIteratorCursor
-     * @throws ObjectIteratorException
+     * @throws ObjectIteratorException|RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
     public static function getAtEnd(IOContext $ioContext): ObjectIteratorCursor
@@ -62,13 +62,7 @@ class ObjectIteratorCursor extends WrappedType
     public function __construct(protected IOContext $ioContext, CData $data, FFI $ffi)
     {
         parent::__construct($data, $ffi);
-    }
-
-    public function __destruct()
-    {
-        if (!$this->closed) {
-            $this->free();
-        }
+        $this->ioContext->registerChildObject($this);
     }
 
     /**
@@ -77,11 +71,12 @@ class ObjectIteratorCursor extends WrappedType
      *
      * @return $this
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
+     * @internal This method is called by the release method and should not be called manually
      */
-    public function free(): static
+    protected function free(): static
     {
-        $this->ffi->rados_object_list_cursor_free($this->ioContext->getCData(), $this->getCData());
-        $this->closed = true;
+        $this->ffi->rados_object_list_cursor_free($this->ioContext->getCDataUnsafe(), $this->getCDataUnsafe());
         return $this;
     }
 
@@ -91,6 +86,7 @@ class ObjectIteratorCursor extends WrappedType
      *
      * @return bool
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function isAtEnd(): bool
     {
@@ -107,9 +103,19 @@ class ObjectIteratorCursor extends WrappedType
      * @param ObjectIteratorCursor $other
      * @return int - -1, 0, or 1 for lhs < rhs, lhs == rhs, or lhs > rhs
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
     public function compare(ObjectIteratorCursor $other): int
     {
         return $this->ffi->rados_object_list_cursor_cmp($this->ioContext->getCData(), $this->getCData(), $other->getCData());
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function releaseCData(): void
+    {
+        /** @noinspection PhpUnhandledExceptionInspection */
+        $this->free();
     }
 }
