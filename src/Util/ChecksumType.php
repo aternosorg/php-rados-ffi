@@ -2,6 +2,7 @@
 
 namespace Aternos\Rados\Util;
 
+use Aternos\Rados\Exception\RadosException;
 use FFI;
 
 enum ChecksumType: string
@@ -43,5 +44,30 @@ enum ChecksumType: string
     public function getCValue(FFI $ffi): int
     {
         return $ffi->{$this->value};
+    }
+
+    /**
+     * @param int $initValue
+     * @return string
+     */
+    public function createInitString(int $initValue): string
+    {
+        return pack($this->getPackFormat(), $initValue);
+    }
+
+    /**
+     * @param string $packed
+     * @return array
+     * @throws RadosException
+     */
+    public function unpack(string $packed): array
+    {
+        $actualResultCount = unpack("V", $packed)[1];
+        $results = @unpack($this->getPackFormat() . $actualResultCount, $packed, 4);
+        if ($results === false) {
+            throw new RadosException("Failed to unpack checksum result");
+        }
+
+        return array_values($results);
     }
 }

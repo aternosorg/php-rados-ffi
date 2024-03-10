@@ -7,17 +7,11 @@ use Aternos\Rados\Exception\PoolException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
 use Aternos\Rados\Util\Buffer;
-use Aternos\Rados\Util\WrappedType;
 use FFI;
-use FFI\CData;
 use InvalidArgumentException;
 
-class Pool extends WrappedType
+class Pool
 {
-    protected Cluster $cluster;
-    protected ?string $name;
-    protected ?int $id;
-
     /**
      * Binding for rados_pool_lookup
      * Lookup a pool id by name
@@ -61,19 +55,12 @@ class Pool extends WrappedType
      * @param Cluster $cluster
      * @param string|null $name
      * @param int|null $id
-     * @param CData $data
-     * @param FFI $ffi
      */
-    public function __construct(Cluster $cluster, ?string $name, ?int $id, CData $data, FFI $ffi)
+    public function __construct(protected Cluster $cluster, protected ?string $name, protected ?int $id)
     {
-        if ($name === null && $id === null) {
+        if ($this->name === null && $this->id === null) {
             throw new InvalidArgumentException("Either name or id must be set");
         }
-        parent::__construct($data, $ffi);
-        $this->cluster = $cluster;
-        $this->name = $name;
-        $this->id = $id;
-        $this->cluster->registerChildObject($this);
     }
 
     /**
@@ -129,8 +116,11 @@ class Pool extends WrappedType
      */
     public function getBaseTier(): int
     {
-        $result = $this->ffi->new("int64_t");
-        PoolException::handle($this->ffi->rados_pool_get_base_tier($this->getCData(), $this->getId(), FFI::addr($result)));
+        $result = $this->getCluster()->getFFI()->new("int64_t");
+        PoolException::handle($this->getCluster()->getFFI()->rados_pool_get_base_tier(
+            $this->getCluster()->getCData(),
+            $this->getId(), FFI::addr($result)
+        ));
         return $result->cdata;
     }
 
@@ -147,7 +137,9 @@ class Pool extends WrappedType
      */
     public function delete(): static
     {
-        PoolException::handle($this->ffi->rados_pool_delete($this->getCData(), $this->getName()));
+        PoolException::handle($this->getCluster()->getFFI()->rados_pool_delete(
+            $this->getCluster()->getCData(), $this->getName()
+        ));
         return $this;
     }
 
@@ -163,20 +155,18 @@ class Pool extends WrappedType
      */
     public function createIOContext(): IOContext
     {
-        $context = $this->ffi->new("rados_ioctx_t");
+        $context = $this->getCluster()->getFFI()->new("rados_ioctx_t");
         if ($this->id !== null) {
-            PoolException::handle($this->ffi->rados_ioctx_create2($this->getCData(), $this->id, FFI::addr($context)));
+            PoolException::handle($this->getCluster()->getFFI()->rados_ioctx_create2(
+                $this->getCluster()->getCData(),
+                $this->id, FFI::addr($context)
+            ));
         } else {
-            PoolException::handle($this->ffi->rados_ioctx_create($this->getCData(), $this->getName(), FFI::addr($context)));
+            PoolException::handle($this->getCluster()->getFFI()->rados_ioctx_create(
+                $this->getCluster()->getCData(),
+                $this->getName(), FFI::addr($context)
+            ));
         }
-        return new IOContext($this, $context, $this->ffi);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    protected function releaseCData(): void
-    {
-        // Pool just refers to the cluster context, so no separate release is needed
+        return new IOContext($this->getCluster(), $context, $this->getCluster()->getFFI());
     }
 }
