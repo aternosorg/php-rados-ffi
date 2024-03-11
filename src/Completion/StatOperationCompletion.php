@@ -3,7 +3,7 @@
 namespace Aternos\Rados\Completion;
 
 use Aternos\Rados\Cluster\Pool\IOContext;
-use Aternos\Rados\Cluster\Pool\ObjectStat;
+use Aternos\Rados\Cluster\Pool\Object\ObjectStat;
 use Aternos\Rados\Exception\CompletionException;
 use Aternos\Rados\Exception\RadosException;
 use FFI\CData;

@@ -1,15 +1,18 @@
 #!/usr/bin/env php
 <?php
 
-const HEADER_PATH = __DIR__ . "/build/includes/";
+const HEADER_PATH = __DIR__ . "/../build/includes/";
 const LIBRADOS_H_PATH = HEADER_PATH . "librados.h";
+const INFO_HEADER_PATH = HEADER_PATH . "info.h";
 const ERRNO_H_PATH = HEADER_PATH . "errno.h";
 const REPLACE_IMPORTS = [
     "netinet/in.h",
     "sys/types.h",
     "linux/types.h",
     "unistd.h",
-    "string.h"
+    "string.h",
+    "sys/time.h",
+    "stdint.h"
 ];
 
 function deleteDirectory(string $path): void
@@ -41,7 +44,7 @@ if (!`which cpp`) {
     exit(1);
 }
 
-$tempDir = sys_get_temp_dir() . "/" . "rados-ffi-" . uniqid();
+$tempDir = sys_get_temp_dir() . "build.php/" . "rados-ffi-" . uniqid();
 @mkdir($tempDir, 0777, true);
 
 foreach (REPLACE_IMPORTS as $import) {
@@ -49,12 +52,17 @@ foreach (REPLACE_IMPORTS as $import) {
     touch($tempDir . "/" . $import);
 }
 
-@mkdir(__DIR__ . "/includes", recursive: true);
+@mkdir(__DIR__ . "/../includes", recursive: true);
 
 $source = LIBRADOS_H_PATH;
-$target = __DIR__ . "/includes/librados.h";
+$target = __DIR__ . "/../includes/librados.h";
 
 `cpp -P '{$source}' '{$target}' -isystem '{$tempDir}' -U __cplusplus -U CEPH_LIBRADOS_H -D __linux__`;
+
+$info = file_get_contents(INFO_HEADER_PATH);
+$info = str_replace("{{DATE}}", date("Y-m-d H:i:s"), $info);
+$content = $info . file_get_contents($target);
+file_put_contents($target, $content);
 
 deleteDirectory($tempDir);
 
@@ -74,9 +82,9 @@ $content = preg_replace_callback("/^\s*#define\s+(E[A-Z0-9_]+)\s+([0-9]+)\s*$/m"
     return "";
 }, $content);
 
-$template = file_get_contents(__DIR__ . "/build/Errno.php.template");
+$template = file_get_contents(__DIR__ . "/../build/Errno.php.template");
 $template = str_replace("{{constants}}", implode("\n", $constants), $template);
-$target = __DIR__ . "/src/Generated/Errno.php";
+$target = __DIR__ . "/../src/Generated/Errno.php";
 @mkdir(dirname($target), recursive: true);
 file_put_contents($target, $template);
 

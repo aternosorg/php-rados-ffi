@@ -1,12 +1,13 @@
 <?php
 
-namespace Aternos\Rados\Util;
+namespace Aternos\Rados\Constants;
 
 use Aternos\Rados\Exception\RadosException;
-use FFI;
 
-enum ChecksumType: string
+enum ChecksumType: string implements EnumGetCValueInterface
 {
+    use EnumGetCValueTrait;
+
     case XXHASH32 = "LIBRADOS_CHECKSUM_TYPE_XXHASH32";
     case XXHASH64 = "LIBRADOS_CHECKSUM_TYPE_XXHASH64";
     case CRC32C = "LIBRADOS_CHECKSUM_TYPE_CRC32C";
@@ -31,19 +32,10 @@ enum ChecksumType: string
      */
     public function getPackFormat(): string
     {
-        return match ($this) {
-            self::XXHASH32, self::CRC32C => "V",
-            self::XXHASH64 => "P",
+        return match ($this->getLength()) {
+            4 => "V",
+            8 => "P",
         };
-    }
-
-    /**
-     * @param FFI $ffi
-     * @return int
-     */
-    public function getCValue(FFI $ffi): int
-    {
-        return $ffi->{$this->value};
     }
 
     /**

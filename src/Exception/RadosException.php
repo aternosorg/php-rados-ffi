@@ -2,8 +2,8 @@
 
 namespace Aternos\Rados\Exception;
 
+use Aternos\Rados\Constants\Constants;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\Util\Constants;
 
 class RadosException extends \Exception
 {

@@ -1,18 +1,23 @@
 <?php
 
-namespace Aternos\Rados\Cluster\Pool;
+namespace Aternos\Rados\Cluster\Pool\Object;
 
+use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Completion\CompareOperationCompletion;
 use Aternos\Rados\Completion\ReadOperationCompletion;
 use Aternos\Rados\Completion\RemoveOperationCompletion;
 use Aternos\Rados\Completion\StatOperationCompletion;
 use Aternos\Rados\Completion\WriteOperationCompletion;
+use Aternos\Rados\Completion\XAttributes\GetXAttributeOperationCompletion;
+use Aternos\Rados\Completion\XAttributes\GetXAttributesOperationCompletion;
+use Aternos\Rados\Completion\XAttributes\RemoveXAttributeCompletion;
+use Aternos\Rados\Completion\XAttributes\SetXAttributeCompletion;
+use Aternos\Rados\Constants\ChecksumType;
+use Aternos\Rados\Constants\Constants;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\RadosObjectException;
 use Aternos\Rados\Generated\Errno;
 use Aternos\Rados\Util\Buffer;
-use Aternos\Rados\Util\ChecksumType;
-use Aternos\Rados\Util\Constants;
 use FFI;
 use InvalidArgumentException;
 
@@ -314,7 +319,31 @@ class RadosObject
         return $this;
     }
 
-    //TODO: iterate xattrs
+    /**
+     * Binding for rados_getxattrs, rados_getxattrs_end
+     * Get all extended attributes of an object as an associative array
+     *
+     * @return string[]
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function getXAttributes(): array
+    {
+        $ffi = $this->getIOContext()->getFFI();
+        $iterator = $ffi->new('rados_xattrs_iter_t');
+        RadosObjectException::handle($ffi->rados_getxattrs(
+            $this->getIOContext()->getCData(),
+            $this->getId(),
+            FFI::addr($iterator)
+        ));
+
+        try {
+            return $this->ioContext->getXAttributesFromIterator($iterator);
+        } catch (RadosException $e) {
+            $ffi->rados_getxattrs_end($iterator);
+            throw $e;
+        }
+    }
 
     /**
      * Binding for rados_aio_read
@@ -322,6 +351,8 @@ class RadosObject
      *
      * The io context determines the snapshot to read from, if any was set
      * by rados_ioctx_snap_set_read().
+     *
+     * @note Reusing the read buffer is only safe after the completion has been handled.
      *
      * @param int $length
      * @param int $offset
@@ -493,6 +524,87 @@ class RadosObject
             $completion->getCData(),
             $compare, strlen($compare), $offset
         ));
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_getxattr
+     * Asynchronously get the value of an extended attribute on an object.
+     *
+     * @param string $name - name of the attribute
+     * @param int $maxLength - maximum length of the attribute value
+     * @return GetXAttributeOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function getXAttributeAsync(string $name, int $maxLength): GetXAttributeOperationCompletion
+    {
+        $buffer = Buffer::create($this->getIOContext()->getFFI(), $maxLength);
+        $completion = new GetXAttributeOperationCompletion($buffer, $this->getIOContext());
+        RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_getxattr(
+            $this->getIOContext()->getCData(), $this->getId(),
+            $completion->getCData(),
+            $name, $buffer->getCData(), $maxLength
+        ));
+        return $completion;
+    }
+
+    /**
+     * Asynchronously set an extended attribute on an object.
+     *
+     * @param string $name - name of the attribute
+     * @param string $value - value of the attribute
+     * @return SetXAttributeCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function setXAttributeAsync(string $name, string $value): SetXAttributeCompletion
+    {
+        $completion = new SetXAttributeCompletion($this->getIOContext());
+        RadosException::handle($this->getIOContext()->getFFI()->rados_aio_setxattr(
+            $this->getIOContext()->getCData(), $this->getId(),
+            $completion->getCData(),
+            $name, $value, strlen($value)
+        ));
+        return $completion;
+    }
+
+    /**
+     * Asynchronously delete an extended attribute from an object.
+     *
+     * @param string $name - name of the attribute
+     * @return RemoveXAttributeCompletion
+     * @throws RadosException
+     */
+    public function removeXAttributeAsync(string $name): RemoveXAttributeCompletion
+    {
+        $completion = new RemoveXAttributeCompletion($this->getIOContext());
+        RadosException::handle($this->getIOContext()->getFFI()->rados_aio_rmxattr(
+            $this->getIOContext()->getCData(), $this->getId(),
+            $completion->getCData(), $name
+        ));
+        return $completion;
+    }
+
+    /**
+     * Asynchronously get all extended attributes of an object as an associative array
+     *
+     * @return GetXAttributesOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function getXAttributesAsync(): GetXAttributesOperationCompletion
+    {
+        $ffi = $this->getIOContext()->getFFI();
+        $iterator = $ffi->new('rados_xattrs_iter_t');
+        $completion = new GetXAttributesOperationCompletion($iterator, $this->getIOContext());
+        RadosObjectException::handle($ffi->rados_aio_getxattrs(
+            $this->getIOContext()->getCData(),
+            $this->getId(),
+            $completion->getCData(),
+            FFI::addr($iterator)
+        ));
+
         return $completion;
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Aternos\Rados\Cluster\Pool;
+namespace Aternos\Rados\Cluster\Pool\Object;
 
 class ObjectStat
 {

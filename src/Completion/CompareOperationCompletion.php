@@ -2,8 +2,8 @@
 
 namespace Aternos\Rados\Completion;
 
+use Aternos\Rados\Constants\Constants;
 use Aternos\Rados\Exception\RadosException;
-use Aternos\Rados\Util\Constants;
 
 /**
  * @extends OperationCompletion<true|int>

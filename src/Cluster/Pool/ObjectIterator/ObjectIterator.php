@@ -14,7 +14,7 @@ use Iterator;
 class ObjectIterator extends WrappedType implements Iterator
 {
     protected IOContext $ioContext;
-    protected ?ObjectIteratorEntry $current = null;
+    protected ?ObjectEntry $current = null;
     protected bool $end = false;
 
     /**
@@ -79,12 +79,12 @@ class ObjectIterator extends WrappedType implements Iterator
      * Binding for rados_nobjects_list_seek_cursor
      * Reposition object iterator to a different position
      *
-     * @param ObjectIteratorCursor $cursor
+     * @param ObjectCursor $cursor
      * @return int - rounded position we moved to
      * @noinspection PhpUndefinedMethodInspection
      * @throws RadosException
      */
-    public function seekCursor(ObjectIteratorCursor $cursor): int
+    public function seekCursor(ObjectCursor $cursor): int
     {
         $result = $this->ffi->rados_nobjects_list_seek_cursor($this->getCData(), $cursor->getCData());
         $this->end = $cursor->isAtEnd();
@@ -96,32 +96,37 @@ class ObjectIterator extends WrappedType implements Iterator
      * Get a cursor to the current position of the iterator
      * The returned cursor must be released with $cursor->free().
      *
-     * @return ObjectIteratorCursor
+     * @return ObjectCursor
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function getCursorPosition(): ObjectIteratorCursor
+    public function getCursorPosition(): ObjectCursor
     {
         $result = $this->ffi->new('rados_object_list_cursor');
         ObjectIteratorException::handle($this->ffi->rados_nobjects_list_get_cursor($this->getCData(), FFI::addr($result)));
-        return new ObjectIteratorCursor($this->ioContext, $result, $this->ffi);
+        return new ObjectCursor($this->ioContext, $result, $this->ffi);
     }
 
     /**
      * Binding for rados_nobjects_list_next
      * Get the next object name and locator in the pool
      *
-     * @return ObjectIteratorEntry
+     * @return ObjectEntry
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    protected function getNextEntry(): ObjectIteratorEntry
+    protected function getNextEntry(): ObjectEntry
     {
         $entry = $this->ffi->new('char*');
         $key = $this->ffi->new('char*');
         $namespace = $this->ffi->new('char*');
         ObjectIteratorException::handle($this->ffi->rados_nobjects_list_next($this->getCData(), FFI::addr($entry), FFI::addr($key), FFI::addr($namespace)));
-        return new ObjectIteratorEntry(
+        if (FFI::isNull($entry)) {
+            throw new ObjectIteratorException("Failed to get next object entry");
+        }
+
+        return new ObjectEntry(
+            $this->ioContext,
             FFI::string($entry),
             !FFI::isNull($key) ? FFI::string($key) : null,
             !FFI::isNull($namespace) ? FFI::string($namespace) : null
@@ -146,10 +151,10 @@ class ObjectIterator extends WrappedType implements Iterator
     }
 
     /**
-     * @return ObjectIteratorEntry
+     * @return ObjectEntry
      * @throws RadosException
      */
-    public function current(): ObjectIteratorEntry
+    public function current(): ObjectEntry
     {
         if ($this->current === null && !$this->end) {
             $this->next();
@@ -175,10 +180,10 @@ class ObjectIterator extends WrappedType implements Iterator
     }
 
     /**
-     * @return ObjectIteratorCursor
+     * @return ObjectCursor
      * @throws RadosException
      */
-    public function key(): ObjectIteratorCursor
+    public function key(): ObjectCursor
     {
         return $this->getCursorPosition();
     }
@@ -197,7 +202,7 @@ class ObjectIterator extends WrappedType implements Iterator
      */
     public function rewind(): void
     {
-        $cursor = ObjectIteratorCursor::getAtBeginning($this->ioContext);
+        $cursor = ObjectCursor::getAtBeginning($this->ioContext);
         $this->seekCursor($cursor);
     }
 

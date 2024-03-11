@@ -2,6 +2,7 @@
     "name": "aternos/php-rados-ffi",
     "description": "Rados bindings for PHP using FFI",
     "type": "library",
+    "bin": ["bin/test.php"],
     "require": {
         "ext-ffi": "*"
     },

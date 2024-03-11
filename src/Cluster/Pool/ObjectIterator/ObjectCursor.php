@@ -9,7 +9,7 @@ use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
 
-class ObjectIteratorCursor extends WrappedType
+class ObjectCursor extends WrappedType
 {
 
     /**
@@ -19,18 +19,18 @@ class ObjectIteratorCursor extends WrappedType
      * This is an opaque handle pointing to the start of a pool.
      *
      * @param IOContext $ioContext
-     * @return ObjectIteratorCursor
+     * @return ObjectCursor
      * @throws ObjectIteratorException|RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public static function getAtBeginning(IOContext $ioContext): ObjectIteratorCursor
+    public static function getAtBeginning(IOContext $ioContext): ObjectCursor
     {
         $ffi = $ioContext->getFFI();
         $result = $ffi->rados_object_list_begin($ioContext->getCData());
         if ($result === null) {
             throw new ObjectIteratorException("Failed to get object list cursor");
         }
-        return new ObjectIteratorCursor($ioContext, $result, $ffi);
+        return new ObjectCursor($ioContext, $result, $ffi);
     }
 
     /**
@@ -40,18 +40,18 @@ class ObjectIteratorCursor extends WrappedType
      * This is an opaque handle pointing to the end of a pool.
      *
      * @param IOContext $ioContext
-     * @return ObjectIteratorCursor
+     * @return ObjectCursor
      * @throws ObjectIteratorException|RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public static function getAtEnd(IOContext $ioContext): ObjectIteratorCursor
+    public static function getAtEnd(IOContext $ioContext): ObjectCursor
     {
         $ffi = $ioContext->getFFI();
         $result = $ffi->rados_object_list_end($ioContext->getCData());
         if ($result === null) {
             throw new ObjectIteratorException("Failed to get object list cursor");
         }
-        return new ObjectIteratorCursor($ioContext, $result, $ffi);
+        return new ObjectCursor($ioContext, $result, $ffi);
     }
 
     /**
@@ -100,12 +100,12 @@ class ObjectIteratorCursor extends WrappedType
      * Compare two cursors, and indicate whether the first cursor precedes,
      * matches, or follows the second.
      *
-     * @param ObjectIteratorCursor $other
+     * @param ObjectCursor $other
      * @return int - -1, 0, or 1 for lhs < rhs, lhs == rhs, or lhs > rhs
      * @noinspection PhpUndefinedMethodInspection
      * @throws RadosException
      */
-    public function compare(ObjectIteratorCursor $other): int
+    public function compare(ObjectCursor $other): int
     {
         return $this->ffi->rados_object_list_cursor_cmp($this->ioContext->getCData(), $this->getCData(), $other->getCData());
     }

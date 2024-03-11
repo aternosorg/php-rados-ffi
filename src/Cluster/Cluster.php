@@ -383,6 +383,21 @@ class Cluster extends WrappedType
     }
 
     /**
+     * Get all pools as Pool instances
+     *
+     * @return Pool[]
+     * @throws RadosException
+     */
+    public function getPools(): array
+    {
+        $pools = [];
+        foreach ($this->listPools() as $poolName) {
+            $pools[] = $this->getPool($poolName);
+        }
+        return $pools;
+    }
+
+    /**
      * Binding for rados_inconsistent_pg_list
      * List inconsistent placement groups of the given pool
      *

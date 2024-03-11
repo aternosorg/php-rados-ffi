@@ -4,10 +4,15 @@ namespace Aternos\Rados\Cluster\Pool;
 
 use Aternos\Rados\Cluster\Cluster;
 use Aternos\Rados\Cluster\ClusterConfig;
+use Aternos\Rados\Cluster\Pool\Object\RadosObject;
+use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectCursor;
 use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectIterator;
+use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectRange;
 use Aternos\Rados\Completion\FlushOperationCompletion;
 use Aternos\Rados\Exception\IOContextException;
+use Aternos\Rados\Exception\ObjectIteratorException;
 use Aternos\Rados\Exception\RadosException;
+use Aternos\Rados\Exception\RadosObjectException;
 use Aternos\Rados\Generated\Errno;
 use Aternos\Rados\Util\Buffer;
 use Aternos\Rados\Util\WrappedType;
@@ -269,5 +274,72 @@ class IOContext extends WrappedType
     public function getObject(string $objectId): RadosObject
     {
         return new RadosObject($objectId, $this);
+    }
+
+    /**
+     * Binding for rados_getxattrs_next
+     * Read all extended attributes from an iterator
+     *
+     * @param CData $iterator
+     * @return string[]
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     * @internal This method should not be called directly, use getXAttributes() or getXAttributesAsync() instead
+     */
+    public function getXAttributesFromIterator(CData $iterator): array
+    {
+        $name = $this->ffi->new('char*');
+        $value = $this->ffi->new('char*');
+        $size = $this->ffi->new('size_t');
+        $result = [];
+        do {
+            RadosObjectException::handle($this->ffi->rados_getxattrs_next(
+                $iterator,
+                FFI::addr($name),
+                FFI::addr($value), FFI::addr($size)
+            ));
+
+            if (!FFI::isNull($name) && !FFI::isNull($value)) {
+                $result[FFI::string($name)] = FFI::string($value, $size->cdata);
+            }
+        } while (!FFI::isNull($name) && !FFI::isNull($value));
+
+        return $result;
+    }
+
+    /**
+     * Get cursor handle pointing to the *beginning* of a pool.
+     *
+     * @return ObjectCursor
+     * @throws RadosException
+     * @throws ObjectIteratorException
+     */
+    public function getCursorAtBeginning(): ObjectCursor
+    {
+        return ObjectCursor::getAtBeginning($this);
+    }
+
+    /**
+     * Get cursor handle pointing to the *end* of a pool.
+     *
+     * @return ObjectCursor
+     * @throws RadosException
+     * @throws ObjectIteratorException
+     */
+    public function getCursorAtEnd(): ObjectCursor
+    {
+        return ObjectCursor::getAtEnd($this);
+    }
+
+    /**
+     * Get a range between a start cursor (inclusive) and an end cursor (exclusive)
+     *
+     * @param ObjectCursor $start
+     * @param ObjectCursor $end
+     * @return ObjectRange
+     */
+    public function getObjectRange(ObjectCursor $start, ObjectCursor $end): ObjectRange
+    {
+        return new ObjectRange($this, $start, $end);
     }
 }
