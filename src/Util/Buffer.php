@@ -23,6 +23,7 @@ class Buffer extends WrappedType
      * @param int $size
      * @param CData $data
      * @param FFI $ffi
+     * @internal Use Buffer::create to create a new buffer
      */
     public function __construct(protected int $size, CData $data, FFI $ffi)
     {

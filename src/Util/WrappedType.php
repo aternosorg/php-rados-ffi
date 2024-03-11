@@ -50,6 +50,7 @@ abstract class WrappedType
      * @param Buffer $buffer
      * @param int $length
      * @return string[]
+     * @throws RadosException
      */
     protected static function parseNullTerminatedStringList(Buffer $buffer, int $length): array
     {
@@ -67,6 +68,7 @@ abstract class WrappedType
     /**
      * @param CData $data
      * @param FFI $ffi
+     * @internal
      */
     public function __construct(CData $data, FFI $ffi)
     {

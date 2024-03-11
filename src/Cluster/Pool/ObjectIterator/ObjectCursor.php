@@ -58,6 +58,7 @@ class ObjectCursor extends WrappedType
      * @param IOContext $ioContext
      * @param CData $data
      * @param FFI $ffi
+     * @internal ObjectCursor objects can be obtained from the IOContext object or created using static methods and should not be created directly
      */
     public function __construct(protected IOContext $ioContext, CData $data, FFI $ffi)
     {

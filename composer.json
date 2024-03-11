@@ -1,15 +1,15 @@
 {
     "name": "aternos/php-rados-ffi",
-    "description": "Rados bindings for PHP using FFI",
+    "description": "An object oriented PHP library for using librados with FFI",
     "type": "library",
-    "bin": ["bin/test.php"],
+    "bin": ["bin/generate-headers"],
     "require": {
         "ext-ffi": "*"
     },
     "suggest": {
         "ext-posix": "Resolve error codes to strings"
     },
-    "license": "MIT",
+    "license": "LGPL-2.1-only",
     "autoload": {
         "psr-4": {
             "Aternos\\Rados\\": "src/"

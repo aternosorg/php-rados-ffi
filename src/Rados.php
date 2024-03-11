@@ -3,6 +3,7 @@
 namespace Aternos\Rados;
 
 use Aternos\Rados\Cluster\Cluster;
+use Aternos\Rados\Cluster\ClusterConfig;
 use Aternos\Rados\Exception\RadosException;
 use FFI;
 
@@ -91,14 +92,65 @@ class Rados
     /**
      * Get a new Rados cluster object
      *
+     * Ceph environment variables are read when this is called, so if
+     * $CEPH_ARGS specifies everything you need to connect, no further
+     * configuration is necessary.
+     *
+     * @param string|null $userId - the user to connect as (i.e. admin, not client.admin)
      * @return Cluster
      * @throws RadosException
      */
-    public function getCluster(): Cluster
+    public function createCluster(?string $userId): Cluster
     {
         if (!$this->initialized) {
             throw new RadosException("Rados is not initialized");
         }
-        return Cluster::create($this->ffi);
+        return Cluster::create($this->ffi, $userId);
+    }
+
+    /**
+     * Extended version of createCluster
+     *
+     * Like createCluster, but
+     * 1) don't assume 'client\.'+id; allow full specification of name
+     * 2) allow specification of cluster name
+     * 3) flags for future expansion
+     *
+     * @param string|null $clusterName
+     * @param string|null $userId
+     * @param int $flags
+     * @return Cluster
+     * @throws RadosException
+     */
+    public function createClusterExtended(?string $clusterName, ?string $userId, int $flags = 0): Cluster
+    {
+        if (!$this->initialized) {
+            throw new RadosException("Rados is not initialized");
+        }
+        return Cluster::create2($this->ffi, $clusterName, $userId, $flags);
+    }
+
+    /**
+     * Create a Cluster object using existing configuration
+     *
+     * @param ClusterConfig $config
+     * @return Cluster
+     * @throws RadosException
+     */
+    public function createClusterWithContext(ClusterConfig $config): Cluster
+    {
+        if (!$this->initialized) {
+            throw new RadosException("Rados is not initialized");
+        }
+        return Cluster::createWithContext($this->ffi, $config);
+    }
+
+    /**
+     * @return ?FFI
+     * @internal The FFI context should not be used directly
+     */
+    public function getFFI(): ?FFI
+    {
+        return $this->ffi;
     }
 }

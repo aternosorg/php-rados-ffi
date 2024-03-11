@@ -15,6 +15,7 @@ class StringLengthReturnValueCompletion extends OperationCompletion
     /**
      * @param Buffer $buffer
      * @param IOContext $ioContext
+     * @internal Completions are returned from async operations and should not be created manually
      */
     public function __construct(protected Buffer $buffer, IOContext $ioContext)
     {

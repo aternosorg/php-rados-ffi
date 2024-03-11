@@ -20,6 +20,7 @@ abstract class OperationCompletion extends Completion
 
     /**
      * @param IOContext $ioContext
+     * @internal Completions are returned from async operations and should not be created manually
      */
     public function __construct(protected IOContext $ioContext)
     {

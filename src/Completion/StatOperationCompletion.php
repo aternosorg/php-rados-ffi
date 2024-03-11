@@ -14,6 +14,7 @@ class StatOperationCompletion extends OperationCompletion
      * @param CData $size
      * @param CData $mTime
      * @param IOContext $ioContext
+     * @internal Completions are returned from async operations and should not be created manually
      */
     public function __construct(protected CData $size, protected CData $mTime, IOContext $ioContext)
     {

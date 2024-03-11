@@ -505,7 +505,7 @@ class Cluster extends WrappedType
     public function createPoolWithCrushRule(string $name, int $crushRuleNumber): Pool
     {
         ClusterException::handle($this->ffi->rados_pool_create_with_crush_rule($this->getCData(), $name, $crushRuleNumber));
-        return new Pool($this, $name, null, $this->getCData(), $this->ffi);
+        return new Pool($this, $name, null);
     }
 
     /**
@@ -513,11 +513,10 @@ class Cluster extends WrappedType
      *
      * @param string $name
      * @return Pool
-     * @throws RadosException
      */
     public function getPool(string $name): Pool
     {
-        return new Pool($this, $name, null, $this->getCData(), $this->ffi);
+        return new Pool($this, $name, null);
     }
 
     /**
@@ -525,11 +524,10 @@ class Cluster extends WrappedType
      *
      * @param int $id
      * @return Pool
-     * @throws RadosException
      */
     public function getPoolById(int $id): Pool
     {
-        return new Pool($this, null, $id, $this->getCData(), $this->ffi);
+        return new Pool($this, null, $id);
     }
 
     /**

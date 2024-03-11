@@ -21,6 +21,7 @@ class ClusterConfig extends WrappedType
      * @param Cluster $cluster
      * @param CData $data
      * @param FFI $ffi
+     * @internal ClusterConfig objects can be obtained from the Cluster object and should not be created directly
      */
     public function __construct(protected Cluster $cluster, CData $data, FFI $ffi)
     {

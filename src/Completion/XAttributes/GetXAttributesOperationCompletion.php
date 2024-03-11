@@ -16,7 +16,7 @@ class GetXAttributesOperationCompletion extends OperationCompletion
     /**
      * @param CData $iterator
      * @param IOContext $ioContext
-     * @internal GetXAttributesOperationCompletion should not be instantiated by user code
+     * @internal Completions are returned from async operations and should not be created manually
      */
     public function __construct(protected CData $iterator, IOContext $ioContext)
     {

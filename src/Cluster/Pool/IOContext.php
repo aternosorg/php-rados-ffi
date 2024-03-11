@@ -25,6 +25,7 @@ class IOContext extends WrappedType
      * @param Cluster $cluster
      * @param CData $data
      * @param FFI $ffi
+     * @internal IOContext objects can be obtained from the Pool object and should not be created directly
      */
     public function __construct(protected Cluster $cluster, CData $data, FFI $ffi)
     {

@@ -38,6 +38,7 @@ class ObjectIterator extends WrappedType implements Iterator
      * @param IOContext $ioContext
      * @param CData $data
      * @param FFI $ffi
+     * @internal ObjectIterator objects can be obtained from the IOContext object or created using ObjectIterator::open() and should not be created directly
      */
     public function __construct(IOContext $ioContext, CData $data, FFI $ffi)
     {

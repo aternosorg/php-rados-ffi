@@ -18,24 +18,8 @@ class Completion extends WrappedType
      * @note This library currently does not support setting callbacks for completions
      *
      * @param FFI $ffi
-     * @return static
      * @noinspection PhpUndefinedMethodInspection
-     */
-    public static function create(FFI $ffi): static
-    {
-        $result = $ffi->new("rados_completion_t");
-        $ffi->rados_aio_create_completion2(null, null, FFI::addr($result));
-        return new static($result, $ffi);
-    }
-
-    /**
-     * Binding for rados_aio_create_completion2
-     * Constructs a completion to use with asynchronous operations
-     *
-     * @note This library currently does not support setting callbacks for completions
-     *
-     * @param FFI $ffi
-     * @noinspection PhpUndefinedMethodInspection
+     * @internal Completions are returned from async operations and should not be created manually
      */
     public function __construct(FFI $ffi)
     {
