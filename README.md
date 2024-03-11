@@ -135,6 +135,26 @@ try {
 }
 ```
 
+### Available Rados features
+This library aims to implement the full librados API. 
+There are, however, some features that are not yet implemented, 
+and features that can't be implemented due to limitations in PHP's FFI.
+
+#### Planned, but not yet implemented
+- Snapshots
+- OMAP
+- Atomic read/write operations
+
+#### Not planned
+- Callback functions for completions
+- Watch/Notify
+
+PHP callback functions can be passed to C functions using FFI, 
+but they can only be called (more or less) safely from the main thread.
+Since both completions and watches can be called from any thread, 
+using PHP callback functions is not feasible.
+
+
 ### How to not segfault
 
 The library uses FFI to call into the librados shared library. 
