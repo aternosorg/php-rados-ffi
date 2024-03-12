@@ -100,7 +100,7 @@ class Rados
      * @return Cluster
      * @throws RadosException
      */
-    public function createCluster(?string $userId): Cluster
+    public function createCluster(?string $userId = null): Cluster
     {
         if (!$this->initialized) {
             throw new RadosException("Rados is not initialized");

@@ -3,7 +3,7 @@ This file is generated, do not modify it directly!
 To generate this file, run `./bin/generate-headers`, or `./vendor/bin/generate-headers`
 if this was installed as a dependency using composer.
 
-GENERATED ON 2024-03-11 14:46:12
+GENERATED ON 2024-03-12 12:52:36
 
 This file is generated from the librados.h and rados_types.h,
 available in the librados-dev package installed when this was generated.
@@ -23,6 +23,12 @@ The source code for these files can be found at https://github.com/ceph/ceph
 #define FFI_LIB "librados.so"
 
 typedef long int time_t;
+typedef long int suseconds_t;
+struct timeval
+{
+  time_t tv_sec;
+  suseconds_t tv_usec;
+};
 struct obj_watch_t {
   char addr[256];
   int64_t watcher_id;

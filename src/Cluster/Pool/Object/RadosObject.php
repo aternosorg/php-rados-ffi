@@ -4,6 +4,7 @@ namespace Aternos\Rados\Cluster\Pool\Object;
 
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Completion\CompareOperationCompletion;
+use Aternos\Rados\Completion\OsdClassMethodExecuteOperationCompletion;
 use Aternos\Rados\Completion\ReadOperationCompletion;
 use Aternos\Rados\Completion\RemoveOperationCompletion;
 use Aternos\Rados\Completion\StatOperationCompletion;
@@ -12,14 +13,18 @@ use Aternos\Rados\Completion\XAttributes\GetXAttributeOperationCompletion;
 use Aternos\Rados\Completion\XAttributes\GetXAttributesOperationCompletion;
 use Aternos\Rados\Completion\XAttributes\RemoveXAttributeCompletion;
 use Aternos\Rados\Completion\XAttributes\SetXAttributeCompletion;
+use Aternos\Rados\Constants\AllocHintFlag;
 use Aternos\Rados\Constants\ChecksumType;
 use Aternos\Rados\Constants\Constants;
+use Aternos\Rados\Constants\LockFlag;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\RadosObjectException;
 use Aternos\Rados\Generated\Errno;
 use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\TimeValue;
 use FFI;
 use InvalidArgumentException;
+use Random\RandomException;
 
 class RadosObject
 {
@@ -346,6 +351,201 @@ class RadosObject
     }
 
     /**
+     * Binding for rados_exec
+     * Execute an OSD class method on an object
+     *
+     * The OSD has a plugin mechanism for performing complicated
+     * operations on an object atomically. These plugins are called
+     * classes. This function allows librados users to call the custom
+     * methods. The input and output formats are defined by the class.
+     * Classes in ceph.git can be found in src/cls subdirectories
+     *
+     * @param string $class - name of the class
+     * @param string $method - name of the method
+     * @param string $input - input data for the method
+     * @param int $maxOutputSize - maximum size of the output buffer
+     * @param Buffer|null $outputBuffer - Optional: temporary buffer to read into.
+     * @return OsdClassMethodExecuteResult
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function execute(string $class, string $method, string $input, int $maxOutputSize, ?Buffer $outputBuffer = null): OsdClassMethodExecuteResult
+    {
+        if ($outputBuffer !== null && $outputBuffer->getSize() >= $maxOutputSize) {
+            $buffer = $outputBuffer;
+        } else {
+            $buffer = Buffer::create($this->getIOContext()->getFFI(), $maxOutputSize);
+        }
+        $result = $this->getIOContext()->getFFI()->rados_exec(
+            $this->getIOContext()->getCData(),
+            $this->getId(),
+            $class, $method,
+            $input, strlen($input),
+            $buffer->getCData(), $maxOutputSize
+        );
+
+        return new OsdClassMethodExecuteResult($result, $buffer);
+    }
+
+    /**
+     * Pin an object in the cache tier
+     *
+     * When an object is pinned in the cache tier, it stays in the cache
+     * tier, and won't be flushed out.
+     *
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function pinCacheTier(): static
+    {
+        RadosObjectException::handle($this->getIOContext()->getFFI()->rados_cache_pin(
+            $this->getIOContext()->getCData(),
+            $this->getId()
+        ));
+        return $this;
+    }
+
+    /**
+     * Unpin an object in the cache tier
+     *
+     * After an object is unpinned in the cache tier, it can be flushed out
+     *
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function unpinCacheTier(): static
+    {
+        RadosObjectException::handle($this->getIOContext()->getFFI()->rados_cache_unpin(
+            $this->getIOContext()->getCData(),
+            $this->getId()
+        ));
+        return $this;
+    }
+
+    /**
+     * Binding for rados_set_alloc_hint, rados_set_alloc_hint2
+     * Set allocation hint for an object
+     *
+     * This is an advisory operation, it will always succeed (as if it was
+     * submitted with a LIBRADOS_OP_FLAG_FAILOK flag set) and is not
+     * guaranteed to do anything on the backend.
+     *
+     * @param int $expectedSize - expected size of the object, in bytes
+     * @param int $expectedWriteSize - expected size of writes to the object, in bytes
+     * @param ?AllocHintFlag[] $flags
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function setAllocHint(int $expectedSize, int $expectedWriteSize, ?array $flags = null): static
+    {
+        $flagValue = null;
+        if ($flags !== null) {
+            $flagValue = AllocHintFlag::combine($this->getIOContext()->getFFI(), ...$flags);
+        }
+
+        if ($flagValue === null) {
+            RadosObjectException::handle($this->getIOContext()->getFFI()->rados_set_alloc_hint(
+                $this->getIOContext()->getCData(),
+                $this->getId(),
+                $expectedSize,
+                $expectedWriteSize
+            ));
+        } else {
+            RadosObjectException::handle($this->getIOContext()->getFFI()->rados_set_alloc_hint2(
+                $this->getIOContext()->getCData(),
+                $this->getId(),
+                $expectedSize,
+                $expectedWriteSize,
+                $flagValue
+            ));
+        }
+        return $this;
+    }
+
+    /**
+     * Binding for rados_lock_shared
+     * Take a shared lock on an object.
+     *
+     * @param string $name - name of the lock
+     * @param string $description - user-defined lock description
+     * @param string $tag - tag of the lock
+     * @param TimeValue|null $duration - duration of the lock. Set to NULL for infinite duration.
+     * @param LockFlag[] $flags - lock flags
+     * @param string|null $cookie - user-defined identifier for this instance of the lock
+     * @return Lock
+     * @throws RadosException
+     * @throws RandomException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function createSharedLock(
+        string     $name,
+        string     $description = "",
+        string     $tag = "",
+        ?TimeValue $duration = null,
+        array      $flags = [],
+        ?string    $cookie = null
+    ): Lock
+    {
+        $durationValue = $duration?->createCData($this->getIOContext()->getFFI());
+        $flagValue = LockFlag::combine(...$flags);
+
+        do {
+            $cookieValue = $cookie ?? Lock::generateCookieValue();
+            $result = $this->getIOContext()->getFFI()->rados_lock_shared(
+                $this->getIOContext()->getCData(), $this->getId(),
+                $name, $cookieValue, $tag, $description,
+                $durationValue ? FFI::addr($durationValue) : null,
+                $flagValue
+            );
+        } while ($result === -Errno::EEXIST->value && $cookie === null);
+        RadosObjectException::handle($result);
+
+        return new Lock($this, $name, $cookieValue, $description, $tag, false, $duration);
+    }
+
+    /**
+     * Binding for rados_lock_exclusive
+     * Take an exclusive lock on an object.
+     *
+     * @param string $name - name of the lock
+     * @param string $description - user-defined lock description
+     * @param TimeValue|null $duration - duration of the lock. Set to NULL for infinite duration.
+     * @param LockFlag[] $flags - lock flags
+     * @param string|null $cookie - user-defined identifier for this instance of the lock
+     * @return Lock
+     * @throws RadosException
+     * @throws RandomException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function createExclusiveLock(
+        string     $name,
+        string     $description = "",
+        ?TimeValue $duration = null,
+        array      $flags = [],
+        ?string    $cookie = null
+    ): Lock
+    {
+        $durationValue = $duration?->createCData($this->getIOContext()->getFFI());
+        $flagValue = LockFlag::combine(...$flags);
+
+        do {
+            $cookieValue = $cookie ?? Lock::generateCookieValue();
+            $result = $this->getIOContext()->getFFI()->rados_lock_exclusive(
+                $this->getIOContext()->getCData(), $this->getId(),
+                $name, $cookieValue, $description,
+                $durationValue ? FFI::addr($durationValue) : null,
+                $flagValue
+            );
+        } while ($result === -Errno::EEXIST->value && $cookie === null);
+        RadosObjectException::handle($result);
+
+        return new Lock($this, $name, $cookieValue, $description, null, true, $duration);
+    }
+
+    /**
      * Binding for rados_aio_read
      * Asynchronously read data from an object
      *
@@ -575,6 +775,7 @@ class RadosObject
      * @param string $name - name of the attribute
      * @return RemoveXAttributeCompletion
      * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function removeXAttributeAsync(string $name): RemoveXAttributeCompletion
     {
@@ -603,6 +804,45 @@ class RadosObject
             $this->getId(),
             $completion->getCData(),
             FFI::addr($iterator)
+        ));
+
+        return $completion;
+    }
+
+    /**
+     * Binding for rados_aio_exec
+     * Asynchronously execute an OSD class method on an object
+     *
+     * The OSD has a plugin mechanism for performing complicated
+     * operations on an object atomically. These plugins are called
+     * classes. This function allows librados users to call the custom
+     * methods. The input and output formats are defined by the class.
+     * Classes in ceph.git can be found in src/cls subdirectories
+     *
+     * @param string $class - name of the class
+     * @param string $method - name of the method
+     * @param string $input - input data for the method
+     * @param int $maxOutputSize - maximum size of the output buffer
+     * @param Buffer|null $outputBuffer - Optional: temporary buffer to read into.
+     * @return OsdClassMethodExecuteOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function executeAsync(string $class, string $method, string $input, int $maxOutputSize, ?Buffer $outputBuffer = null): OsdClassMethodExecuteOperationCompletion
+    {
+        if ($outputBuffer !== null && $outputBuffer->getSize() >= $maxOutputSize) {
+            $buffer = $outputBuffer;
+        } else {
+            $buffer = Buffer::create($this->getIOContext()->getFFI(), $maxOutputSize);
+        }
+        $completion = new OsdClassMethodExecuteOperationCompletion($buffer, $this->getIOContext());
+        RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_exec(
+            $this->getIOContext()->getCData(),
+            $this->getId(),
+            $completion->getCData(),
+            $class, $method,
+            $input, strlen($input),
+            $buffer->getCData(), $maxOutputSize
         ));
 
         return $completion;

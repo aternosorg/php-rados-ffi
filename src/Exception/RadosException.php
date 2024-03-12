@@ -33,4 +33,18 @@ class RadosException extends \Exception
         }
         return $code;
     }
+
+    /**
+     * @param Errno ...$errno
+     * @return bool
+     */
+    public function is(Errno ...$errno): bool
+    {
+        foreach ($errno as $e) {
+            if ($this->getCode() === -$e->value) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

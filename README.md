@@ -125,11 +125,13 @@ $result = $completion->waitAndGetResult();
 If a Rados operation fails, it will throw a [`RadosException`](src/Exception/RadosException.php)
 The error code returned from librados can be obtained using the `getCode()` method.
 
+To check whether an error has a specific error code, the `is()` method can be used.
+
 ```php
 try {
     $cluster->getPool("nonexistent")->createIOContext();
 } catch (\Aternos\Rados\Exception\RadosException $e) {
-    if (-$e->getCode() === \Aternos\Rados\Generated\Errno::ENOENT) {
+    if ($e->is(\Aternos\Rados\Generated\Errno::ENOENT)) {
         echo "Pool does not exist" . PHP_EOL;
     }
 }
