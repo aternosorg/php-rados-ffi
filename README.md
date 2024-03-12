@@ -146,10 +146,15 @@ and features that can't be implemented due to limitations in PHP's FFI.
 - Snapshots
 - OMAP
 - Atomic read/write operations
+- Applications
+- Client blacklist
+- mon/mgr/osd/pg commands
+- Register as service
 
 #### Not planned
 - Callback functions for completions
 - Watch/Notify
+- Log callbacks
 
 PHP callback functions can be passed to C functions using FFI, 
 but they can only be called (more or less) safely from the main thread.
