@@ -16,7 +16,7 @@ class Buffer extends WrappedType
      */
     public static function grow(int $size): int
     {
-        return (int) ($size * static::GROWTH_FACTOR);
+        return (int) max($size * static::GROWTH_FACTOR, 1);
     }
 
     /**
