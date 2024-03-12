@@ -47,25 +47,6 @@ abstract class WrappedType
     }
 
     /**
-     * @param Buffer $buffer
-     * @param int $length
-     * @return string[]
-     * @throws RadosException
-     */
-    protected static function parseNullTerminatedStringList(Buffer $buffer, int $length): array
-    {
-        $parts = explode("\0", $buffer->readString($length));
-        $result = [];
-        foreach ($parts as $part) {
-            if ($part === "") {
-                break;
-            }
-            $result[] = $part;
-        }
-        return $result;
-    }
-
-    /**
      * @param CData $data
      * @param FFI $ffi
      * @internal

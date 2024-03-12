@@ -39,13 +39,12 @@ class Pool
      */
     public static function reverseLookup(Cluster $cluster, int $id): string
     {
-        $step = 256;
-        $length = $step;
+        $length = 256;
         $ffi = $cluster->getFFI();
         do {
             $buffer = Buffer::create($ffi, $length);
             $res = $ffi->rados_pool_reverse_lookup($cluster->getCData(), $id, $buffer->getCData(), $length);
-            $length += $step;
+            $length = Buffer::grow($length);
         } while ($res < 0 && -$res === Errno::ERANGE->value);
         $resultLength = PoolException::handle($res);
         return $buffer->readString($resultLength);

@@ -8,6 +8,17 @@ use FFI\CData;
 
 class Buffer extends WrappedType
 {
+    const GROWTH_FACTOR = 1.6;
+
+    /**
+     * @param int $size
+     * @return int
+     */
+    public static function grow(int $size): int
+    {
+        return (int) ($size * static::GROWTH_FACTOR);
+    }
+
     /**
      * @param FFI $ffi
      * @param int $size
@@ -60,6 +71,25 @@ class Buffer extends WrappedType
     public function readString(?int $length = null): string
     {
         return FFI::string($this->getCData(), $length);
+    }
+
+    /**
+     * @return string[]
+     * @throws RadosException
+     */
+    public function readNullTerminatedStringList(?int $length = null, bool $stopOnEmptyString = true): array
+    {
+        $parts = explode("\0", $this->readString($length ?? $this->getSize()));
+        array_pop($parts);
+
+        $result = [];
+        foreach ($parts as $part) {
+            if ($part === "" && $stopOnEmptyString) {
+                break;
+            }
+            $result[] = $part;
+        }
+        return $result;
     }
 
     /**

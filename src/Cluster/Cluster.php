@@ -296,12 +296,11 @@ class Cluster extends WrappedType
      */
     public function configGet(string $option): string
     {
-        $step = 512;
-        $length = $step;
+        $length = 512;
         do {
             $buffer = Buffer::create($this->ffi, $length);
             $res = $this->ffi->rados_conf_get($this->getCData(), $option, $buffer->getCData(), $length);
-            $length += $step;
+            $length = Buffer::grow($length);
         } while ($res < 0 && -$res === Errno::ENAMETOOLONG->value);
         ClusterException::handle($res);
         return $buffer->readString();
@@ -338,12 +337,11 @@ class Cluster extends WrappedType
      */
     public function getFsid(): string
     {
-        $step = 512;
         $length = 37;
         do {
             $buffer = Buffer::create($this->ffi, $length);
             $res = $this->ffi->rados_cluster_fsid($this->getCData(), $buffer->getCData(), $length);
-            $length += $step;
+            $length = Buffer::grow($length);
         } while (-$res === Errno::ERANGE->value);
         ClusterException::handle($res);
         return $buffer->readString();
@@ -379,7 +377,7 @@ class Cluster extends WrappedType
         $buffer = Buffer::create($this->ffi, $length);
         ClusterException::handle($this->ffi->rados_pool_list($this->getCData(), $buffer->getCData(), $length));
 
-        return static::parseNullTerminatedStringList($buffer, $length);
+        return $buffer->readNullTerminatedStringList($length);
     }
 
     /**
@@ -412,7 +410,7 @@ class Cluster extends WrappedType
         $buffer = Buffer::create($this->ffi, $length);
         ClusterException::handle($this->ffi->rados_inconsistent_pg_list($this->getCData(), $poolId, $buffer->getCData(), $length));
 
-        return static::parseNullTerminatedStringList($buffer, $length);
+        return $buffer->readNullTerminatedStringList($length);
     }
 
     /**

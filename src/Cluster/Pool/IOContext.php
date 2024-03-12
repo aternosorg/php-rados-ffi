@@ -180,12 +180,11 @@ class IOContext extends WrappedType
      */
     public function getNamespace(): string
     {
-        $step = 512;
-        $length = $step;
+        $length = 512;
         do {
             $buffer = Buffer::create($this->ffi, $length);
             $res = $this->ffi->rados_ioctx_get_namespace($this->getCData(), $buffer->getCData(), $length);
-            $length += $step;
+            $length = Buffer::grow($length);
         } while (-$res === Errno::ERANGE->value);
         IOContextException::handle($res);
         return $buffer->readString();

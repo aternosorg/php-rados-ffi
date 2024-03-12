@@ -1,8 +1,9 @@
 <?php
 
-namespace Aternos\Rados\Cluster\Pool\Object;
+namespace Aternos\Rados\Cluster\Pool\Object\Lock;
 
 use Aternos\Rados\Cluster\Pool\IOContext;
+use Aternos\Rados\Cluster\Pool\Object\RadosObject;
 use Aternos\Rados\Completion\UnlockOperationCompletion;
 use Aternos\Rados\Constants\LockFlag;
 use Aternos\Rados\Exception\RadosException;
@@ -11,10 +12,8 @@ use Aternos\Rados\Util\TimeValue;
 use FFI;
 use Random\RandomException;
 
-class Lock
+class Lock extends AbstractLock
 {
-    protected IOContext $ioContext;
-
     /**
      * @return string
      * @throws RandomException
@@ -34,32 +33,16 @@ class Lock
      * @param TimeValue|null $duration
      */
     public function __construct(
-        protected RadosObject $object,
-        protected string $name,
-        protected string $cookie,
+        RadosObject $object,
+        string $name,
+        string $cookie,
         protected string $description,
-        protected ?string $tag,
-        protected bool $exclusive,
+        ?string $tag,
+        bool $exclusive,
         protected ?TimeValue $duration
     )
     {
-        $this->ioContext = $object->getIoContext();
-    }
-
-    /**
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCookie(): string
-    {
-        return $this->cookie;
+        parent::__construct($object, $name, $cookie, $tag, $exclusive);
     }
 
     /**
@@ -68,22 +51,6 @@ class Lock
     public function getDescription(): string
     {
         return $this->description;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isExclusive(): bool
-    {
-        return $this->exclusive;
-    }
-
-    /**
-     * @return IOContext
-     */
-    public function getIoContext(): IOContext
-    {
-        return $this->ioContext;
     }
 
     /**
@@ -158,13 +125,5 @@ class Lock
         }
 
         return $this;
-    }
-
-    /**
-     * @return RadosObject
-     */
-    public function getObject(): RadosObject
-    {
-        return $this->object;
     }
 }

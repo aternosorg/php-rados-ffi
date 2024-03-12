@@ -3,6 +3,8 @@
 namespace Aternos\Rados\Cluster\Pool\Object;
 
 use Aternos\Rados\Cluster\Pool\IOContext;
+use Aternos\Rados\Cluster\Pool\Object\Lock\ForeignLock;
+use Aternos\Rados\Cluster\Pool\Object\Lock\Lock;
 use Aternos\Rados\Completion\CompareOperationCompletion;
 use Aternos\Rados\Completion\OsdClassMethodExecuteOperationCompletion;
 use Aternos\Rados\Completion\ReadOperationCompletion;
@@ -276,15 +278,14 @@ class RadosObject
      */
     public function getXAttribute(string $name): string
     {
-        $step = 512;
-        $length = $step;
+        $length = 512;
         do {
             $buffer = Buffer::create($this->getIOContext()->getFFI(), $length);
             $res = $this->getIOContext()->getFFI()->rados_getxattr(
                 $this->getIOContext()->getCData(), $this->getId(),
                 $name, $buffer->getCData(), $length
             );
-            $length += $step;
+            $length = Buffer::grow($length);
         } while (-$res === Errno::ERANGE->value);
         RadosObjectException::handle($res);
         return $buffer->readString($res);
@@ -543,6 +544,74 @@ class RadosObject
         RadosObjectException::handle($result);
 
         return new Lock($this, $name, $cookieValue, $description, null, true, $duration);
+    }
+
+    /**
+     * Binding for rados_list_lockers
+     * List clients that have locked the named object lock and information about
+     * the lock.
+     *
+     * @param string $name - name of the lock
+     * @return ForeignLock[]
+     * @throws RadosException
+     * @throws RadosObjectException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function listLocks(string $name): array
+    {
+        $ffi = $this->getIOContext()->getFFI();
+        $length = 1024;
+
+        $tagsLength = $ffi->new('size_t');
+        $clientsLength = $ffi->new('size_t');
+        $cookiesLength = $ffi->new('size_t');
+        $addressesLength = $ffi->new('size_t');
+
+        $exclusive = $ffi->new('int');
+        do {
+            $tag = Buffer::create($ffi, $length);
+            $clients = Buffer::create($ffi, $length);
+            $cookies = Buffer::create($ffi, $length);
+            $addresses = Buffer::create($ffi, $length);
+
+            $tagsLength->cdata = $length;
+            $clientsLength->cdata = $length;
+            $cookiesLength->cdata = $length;
+            $addressesLength->cdata = $length;
+
+            $res = $this->getIOContext()->getFFI()->rados_list_lockers(
+                $this->getIOContext()->getCData(),
+                $this->getId(),
+                $name, FFI::addr($exclusive),
+                $tag->getCData(), FFI::addr($tagsLength),
+                $clients->getCData(), FFI::addr($clientsLength),
+                $cookies->getCData(), FFI::addr($cookiesLength),
+                $addresses->getCData(), FFI::addr($addressesLength)
+            );
+            $length = Buffer::grow($length);
+        } while (-$res === Errno::ERANGE->value);
+        RadosObjectException::handle($res);
+
+        $clientList = $clients->readNullTerminatedStringList($clientsLength->cdata, false);
+        $cookieList = $cookies->readNullTerminatedStringList($cookiesLength->cdata, false);
+        $addressList = $addresses->readNullTerminatedStringList($addressesLength->cdata, false);
+
+        $count = count($cookieList);
+        $result = [];
+        for ($i = 0; $i < $count; $i++) {
+            if (!isset($clientList[$i], $cookieList[$i], $addressList[$i])) {
+                throw new RadosObjectException("Failed to read lock list");
+            }
+
+            $result[] = new ForeignLock(
+                $this, $name,
+                $cookieList[$i], $tag->readString($tagsLength->cdata),
+                (bool) $exclusive->cdata,
+                $clientList[$i], $addressList[$i]
+            );
+        }
+
+        return $result;
     }
 
     /**
