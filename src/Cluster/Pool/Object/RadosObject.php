@@ -5,6 +5,7 @@ namespace Aternos\Rados\Cluster\Pool\Object;
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Cluster\Pool\Object\Lock\ForeignLock;
 use Aternos\Rados\Cluster\Pool\Object\Lock\Lock;
+use Aternos\Rados\Cluster\Pool\Snapshot\Snapshot;
 use Aternos\Rados\Completion\CompareOperationCompletion;
 use Aternos\Rados\Completion\OsdClassMethodExecuteOperationCompletion;
 use Aternos\Rados\Completion\ReadOperationCompletion;
@@ -612,6 +613,26 @@ class RadosObject
         }
 
         return $result;
+    }
+
+    /**
+     * Rollback an object to a pool snapshot
+     *
+     * The contents of the object will be the same as
+     * when the snapshot was taken.
+     *
+     * @param Snapshot $snapshot
+     * @return $this
+     * @throws RadosException
+     */
+    public function rollback(Snapshot $snapshot): static
+    {
+        RadosObjectException::handle($this->getIOContext()->getFFI()->rados_ioctx_snap_rollback(
+            $this->getIOContext()->getCData(),
+            $this->getId(),
+            $snapshot->getName()
+        ));
+        return $this;
     }
 
     /**

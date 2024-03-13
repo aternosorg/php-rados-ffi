@@ -487,7 +487,7 @@ class Cluster extends WrappedType
     public function createPool(string $name): Pool
     {
         ClusterException::handle($this->ffi->rados_pool_create($this->getCData(), $name));
-        return new Pool($this, $name, null, $this->getCData(), $this->ffi);
+        return new Pool($this, $name, null);
     }
 
     /**
@@ -509,6 +509,8 @@ class Cluster extends WrappedType
     /**
      * Get a Pool instance by name
      *
+     * @note This method does not check if the pool exists
+     *
      * @param string $name
      * @return Pool
      */
@@ -519,6 +521,8 @@ class Cluster extends WrappedType
 
     /**
      * Get a Pool instance by id
+     *
+     * @note This method does not check if the pool exists
      *
      * @param int $id
      * @return Pool

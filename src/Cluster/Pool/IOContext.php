@@ -8,6 +8,7 @@ use Aternos\Rados\Cluster\Pool\Object\RadosObject;
 use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectCursor;
 use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectIterator;
 use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectRange;
+use Aternos\Rados\Cluster\Pool\Snapshot\Snapshot;
 use Aternos\Rados\Completion\FlushOperationCompletion;
 use Aternos\Rados\Exception\IOContextException;
 use Aternos\Rados\Exception\ObjectIteratorException;
@@ -341,5 +342,83 @@ class IOContext extends WrappedType
     public function getObjectRange(ObjectCursor $start, ObjectCursor $end): ObjectRange
     {
         return new ObjectRange($this, $start, $end);
+    }
+
+    /**
+     * Binding for rados_ioctx_snap_create
+     * Create a pool-wide snapshot
+     *
+     * @param string $name
+     * @return Snapshot
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function createSnapshot(string $name): Snapshot
+    {
+        IOContextException::handle($this->ffi->rados_ioctx_snap_create($this->getCData(), $name));
+        return new Snapshot($this, null, $name);
+    }
+
+    /**
+     * Get a snapshot by name
+     *
+     * @note This method does not check if the snapshot exists
+     *
+     * @param string $name
+     * @return Snapshot
+     */
+    public function getSnapshotByName(string $name): Snapshot
+    {
+        return new Snapshot($this, null, $name);
+    }
+
+    /**
+     * Get a snapshot by id
+     *
+     * @note This method does not check if the snapshot exists
+     *
+     * @param int $id
+     * @return Snapshot
+     */
+    public function getSnapshotById(int $id): Snapshot
+    {
+        return new Snapshot($this, $id, null);
+    }
+
+    /**
+     * @param Snapshot $snapshot
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function setReadSnapshot(Snapshot $snapshot): static
+    {
+        IOContextException::handle($this->ffi->rados_ioctx_snap_set_read($this->getCData(), $snapshot->getId()));
+        return $this;
+    }
+
+    /**
+     * Binding for rados_ioctx_snap_list
+     * List all the ids of pool snapshots
+     *
+     * @return Snapshot[]
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function listSnapshots(): array
+    {
+        $length = 32;
+        do {
+            $buffer = $this->ffi->new($this->ffi->arrayType($this->ffi->type("rados_snap_t"), [$length]));
+            $res = $this->ffi->rados_ioctx_snap_list($this->getCData(), $buffer, $length);
+            $length = Buffer::grow($length);
+        } while (-$res === Errno::ERANGE->value);
+        $resultLength = IOContextException::handle($res);
+
+        $snapshots = [];
+        for ($i = 0; $i < $resultLength; $i++) {
+            $snapshots[] = new Snapshot($this, $buffer[$i], null);
+        }
+        return $snapshots;
     }
 }

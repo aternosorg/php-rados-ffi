@@ -22,7 +22,7 @@ class Pool
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public static function lookup(Cluster $cluster, string $name): int
+    public static function lookupName(Cluster $cluster, string $name): int
     {
         return PoolException::handle($cluster->getFFI()->rados_pool_lookup($cluster->getCData(), $name));
     }
@@ -37,7 +37,7 @@ class Pool
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public static function reverseLookup(Cluster $cluster, int $id): string
+    public static function lookupId(Cluster $cluster, int $id): string
     {
         $length = 256;
         $ffi = $cluster->getFFI();
@@ -45,7 +45,7 @@ class Pool
             $buffer = Buffer::create($ffi, $length);
             $res = $ffi->rados_pool_reverse_lookup($cluster->getCData(), $id, $buffer->getCData(), $length);
             $length = Buffer::grow($length);
-        } while ($res < 0 && -$res === Errno::ERANGE->value);
+        } while (-$res === Errno::ERANGE->value);
         $resultLength = PoolException::handle($res);
         return $buffer->readString($resultLength);
     }
@@ -81,7 +81,7 @@ class Pool
     public function getId(): int
     {
         if ($this->id === null) {
-            $this->id = static::lookup($this->getCluster(), $this->name);
+            $this->id = static::lookupName($this->getCluster(), $this->name);
         }
         return $this->id;
     }
@@ -97,7 +97,7 @@ class Pool
     public function getName(): string
     {
         if ($this->name === null) {
-            $this->name = static::reverseLookup($this->getCluster(), $this->id);
+            $this->name = static::lookupId($this->getCluster(), $this->id);
         }
         return $this->name;
     }
