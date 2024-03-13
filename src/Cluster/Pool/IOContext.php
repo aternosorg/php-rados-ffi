@@ -453,8 +453,8 @@ class IOContext extends WrappedType
      *
      * @note I do not understand how any of this works, which is why this is just a plain binding to the C function
      *
-     * @param int $seq
-     * @param array $snaps
+     * @param int $seq - the newest snapshot sequence number for the pool
+     * @param array $snaps - array of snapshots in sorted by descending id
      * @return $this
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
