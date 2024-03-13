@@ -143,7 +143,6 @@ There are, however, some features that are not yet implemented,
 and features that can't be implemented due to limitations in PHP's FFI.
 
 #### Planned, but not yet implemented
-- Snapshots
 - OMAP
 - Atomic read/write operations
 - Applications
