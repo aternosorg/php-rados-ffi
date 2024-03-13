@@ -8,8 +8,12 @@ use Aternos\Rados\Cluster\Pool\Object\RadosObject;
 use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectCursor;
 use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectIterator;
 use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectRange;
+use Aternos\Rados\Cluster\Pool\Snapshot\SelfManagedSnapshot;
 use Aternos\Rados\Cluster\Pool\Snapshot\Snapshot;
+use Aternos\Rados\Cluster\Pool\Snapshot\SnapshotInterface;
 use Aternos\Rados\Completion\FlushOperationCompletion;
+use Aternos\Rados\Completion\SelfManagedSnapshotCreateOperationCompletion;
+use Aternos\Rados\Constants\Constants;
 use Aternos\Rados\Exception\IOContextException;
 use Aternos\Rados\Exception\ObjectIteratorException;
 use Aternos\Rados\Exception\RadosException;
@@ -345,6 +349,45 @@ class IOContext extends WrappedType
     }
 
     /**
+     * Binding for rados_ioctx_selfmanaged_snap_create
+     * Allocate an ID for a self-managed snapshot
+     *
+     * Get a unique ID to put in the snaphot context to create a
+     * snapshot. A clone of an object is not created until a write with
+     * the new snapshot context is completed.
+     *
+     * @return SelfManagedSnapshot
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function createSelfManagedSnapshot(): SelfManagedSnapshot
+    {
+        $id = $this->ffi->new("rados_snap_t");
+        RadosObjectException::handle($this->ffi->rados_ioctx_selfmanaged_snap_create($this->getCData(), FFI::addr($id)));
+        return new SelfManagedSnapshot($this, $id->cdata);
+    }
+
+    /**
+     * Binding for rados_aio_ioctx_selfmanaged_snap_create
+     * Allocate an ID for a self-managed snapshot
+     *
+     * Get a unique ID to put in the snaphot context to create a
+     * snapshot. A clone of an object is not created until a write with
+     * the new snapshot context is completed.
+     *
+     * @return SelfManagedSnapshotCreateOperationCompletion
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function createSelfManagedSnapshotAsync(): SelfManagedSnapshotCreateOperationCompletion
+    {
+        $id = $this->ffi->new("rados_snap_t");
+        $completion = new SelfManagedSnapshotCreateOperationCompletion($id, $this);
+        RadosObjectException::handle($this->ffi->rados_aio_ioctx_selfmanaged_snap_create($this->getCData(), FFI::addr($id), $completion->getCData()));
+        return $completion;
+    }
+
+    /**
      * Binding for rados_ioctx_snap_create
      * Create a pool-wide snapshot
      *
@@ -386,14 +429,43 @@ class IOContext extends WrappedType
     }
 
     /**
-     * @param Snapshot $snapshot
+     * @param SnapshotInterface|null $snapshot - the snapshot to set as the read snapshot,
+     * or null for no snapshot (i.e. normal operation)
      * @return $this
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function setReadSnapshot(Snapshot $snapshot): static
+    public function setReadSnapshot(?SnapshotInterface $snapshot): static
     {
-        IOContextException::handle($this->ffi->rados_ioctx_snap_set_read($this->getCData(), $snapshot->getId()));
+        $snapId = $snapshot?->getId();
+        if ($snapId === null) {
+            $snapId = Constants::SNAP_HEAD;
+        }
+        IOContextException::handle($this->ffi->rados_ioctx_snap_set_read($this->getCData(), $snapId));
+        return $this;
+    }
+
+    /**
+     * Binding for rados_ioctx_selfmanaged_snap_set_write_ctx
+     * Set the snapshot context for use when writing to objects
+     *
+     * This is stored in the io context, and applies to all future writes.
+     *
+     * @note I do not understand how any of this works, which is why this is just a plain binding to the C function
+     *
+     * @param int $seq
+     * @param array $snaps
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function setSelfManagedSnapshotWriteContext(int $seq, array $snaps): static
+    {
+        $snapsData = $this->ffi->new($this->ffi->arrayType($this->ffi->type("rados_snap_t"), [count($snaps)]));
+        foreach (array_values($snaps) as $i => $snap) {
+            $snapsData[$i] = $snap->getId();
+        }
+        IOContextException::handle($this->ffi->rados_ioctx_selfmanaged_snap_set_write_ctx($this->getCData(), $seq, $snapsData, count($snaps)));
         return $this;
     }
 
