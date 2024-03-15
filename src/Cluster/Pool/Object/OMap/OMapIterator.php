@@ -2,7 +2,7 @@
 
 namespace Aternos\Rados\Cluster\Pool\Object\OMap;
 
-use Aternos\Rados\Cluster\Pool\IOContext;
+use Aternos\Rados\Cluster\Pool\Object\AttributePair;
 use Aternos\Rados\Exception\OMapIteratorException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Util\WrappedType;
@@ -20,29 +20,27 @@ use Iterator;
  */
 class OMapIterator extends WrappedType implements Iterator, Countable
 {
-    protected ?OMapPair $current = null;
+    protected ?AttributePair $current = null;
     protected bool $end = false;
 
     /**
-     * @param IOContext $ioContext
      * @param CData $data
      * @param FFI $ffi
      */
-    public function __construct(protected IOContext $ioContext, CData $data, FFI $ffi)
+    public function __construct(CData $data, FFI $ffi)
     {
         parent::__construct($data, $ffi);
-        $this->ioContext->registerChildObject($this);
     }
 
     /**
      * Binding for rados_omap_get_keys2
      * Get the next omap key/value pair on the object.
      *
-     * @return OMapPair|null
+     * @return AttributePair|null
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    protected function getNextEntry(): ?OMapPair
+    protected function getNextEntry(): ?AttributePair
     {
         $key = $this->ffi->new('char*');
         $value = $this->ffi->new('char*');
@@ -59,7 +57,7 @@ class OMapIterator extends WrappedType implements Iterator, Countable
             return null;
         }
 
-        return new OMapPair(
+        return new AttributePair(
             FFI::string($key, $keyLength->cdata),
             FFI::string($value, $valueLength->cdata)
         );

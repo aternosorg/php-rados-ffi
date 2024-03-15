@@ -4,7 +4,7 @@ namespace Aternos\Rados\Cluster\Pool\Snapshot;
 
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Cluster\Pool\Snapshot\SnapshotInterface;
-use Aternos\Rados\Completion\SelfManagedSnapshotRemoveOperationCompletion;
+use Aternos\Rados\Completion\SelfManagedSnapshotRemoveCompletion;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\SnapshotException;
 
@@ -43,12 +43,12 @@ class SelfManagedSnapshot implements SnapshotInterface
     }
 
     /**
-     * @return SelfManagedSnapshotRemoveOperationCompletion
+     * @return SelfManagedSnapshotRemoveCompletion
      * @throws RadosException
      */
-    public function removeAsync(): SelfManagedSnapshotRemoveOperationCompletion
+    public function removeAsync(): SelfManagedSnapshotRemoveCompletion
     {
-        $completion = new SelfManagedSnapshotRemoveOperationCompletion($this->ioContext);
+        $completion = new SelfManagedSnapshotRemoveCompletion($this->ioContext);
         SnapshotException::handle($this->ioContext->getFFI()->rados_aio_ioctx_selfmanaged_snap_remove(
             $this->ioContext->getCData(),
             $this->getId(),

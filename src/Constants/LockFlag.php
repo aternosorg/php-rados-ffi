@@ -4,8 +4,8 @@ namespace Aternos\Rados\Constants;
 
 enum LockFlag: int
 {
-    case MAY_RENEW = 1<<0;
-    case MUST_RENEW = 1<<1;
+    case MayRenew = 1<<0;
+    case MustRenew = 1<<1;
 
     /**
      * @param static ...$flags

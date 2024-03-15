@@ -2,7 +2,7 @@
 
 namespace Aternos\Rados\Cluster\Pool\Object;
 
-use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\Buffer\Buffer;
 
 class OsdClassMethodExecuteResult
 {

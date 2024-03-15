@@ -2,12 +2,9 @@
 
 namespace Aternos\Rados\Completion;
 
-use Aternos\Rados\Exception\CompletionException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Util\WrappedType;
-use Closure;
 use FFI;
-use FFI\CData;
 
 class Completion extends WrappedType
 {

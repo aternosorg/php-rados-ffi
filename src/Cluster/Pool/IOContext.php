@@ -11,15 +11,15 @@ use Aternos\Rados\Cluster\Pool\ObjectIterator\ObjectRange;
 use Aternos\Rados\Cluster\Pool\Snapshot\SelfManagedSnapshot;
 use Aternos\Rados\Cluster\Pool\Snapshot\Snapshot;
 use Aternos\Rados\Cluster\Pool\Snapshot\SnapshotInterface;
-use Aternos\Rados\Completion\FlushOperationCompletion;
-use Aternos\Rados\Completion\SelfManagedSnapshotCreateOperationCompletion;
+use Aternos\Rados\Completion\FlushCompletion;
+use Aternos\Rados\Completion\SelfManagedSnapshotCreateCompletion;
 use Aternos\Rados\Constants\Constants;
 use Aternos\Rados\Exception\IOContextException;
 use Aternos\Rados\Exception\ObjectIteratorException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\RadosObjectException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\Buffer\Buffer;
 use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
@@ -261,13 +261,13 @@ class IOContext extends WrappedType
      * Binding for rados_aio_flush_async
      * Flush all pending writes in an io context asynchronously
      *
-     * @return FlushOperationCompletion
+     * @return FlushCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function flushAsyncWritesAsync(): FlushOperationCompletion
+    public function flushAsyncWritesAsync(): FlushCompletion
     {
-        $completion = new FlushOperationCompletion($this);
+        $completion = new FlushCompletion($this);
         IOContextException::handle($this->ffi->rados_aio_flush_async($this->getCData(), $completion->getCData()));
         return $completion;
     }
@@ -279,37 +279,6 @@ class IOContext extends WrappedType
     public function getObject(string $objectId): RadosObject
     {
         return new RadosObject($objectId, $this);
-    }
-
-    /**
-     * Binding for rados_getxattrs_next
-     * Read all extended attributes from an iterator
-     *
-     * @param CData $iterator
-     * @return string[]
-     * @throws RadosException
-     * @noinspection PhpUndefinedMethodInspection
-     * @internal This method should not be called directly, use getXAttributes() or getXAttributesAsync() instead
-     */
-    public function getXAttributesFromIterator(CData $iterator): array
-    {
-        $name = $this->ffi->new('char*');
-        $value = $this->ffi->new('char*');
-        $size = $this->ffi->new('size_t');
-        $result = [];
-        do {
-            RadosObjectException::handle($this->ffi->rados_getxattrs_next(
-                $iterator,
-                FFI::addr($name),
-                FFI::addr($value), FFI::addr($size)
-            ));
-
-            if (!FFI::isNull($name) && !FFI::isNull($value)) {
-                $result[FFI::string($name)] = FFI::string($value, $size->cdata);
-            }
-        } while (!FFI::isNull($name) && !FFI::isNull($value));
-
-        return $result;
     }
 
     /**
@@ -375,14 +344,14 @@ class IOContext extends WrappedType
      * snapshot. A clone of an object is not created until a write with
      * the new snapshot context is completed.
      *
-     * @return SelfManagedSnapshotCreateOperationCompletion
+     * @return SelfManagedSnapshotCreateCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function createSelfManagedSnapshotAsync(): SelfManagedSnapshotCreateOperationCompletion
+    public function createSelfManagedSnapshotAsync(): SelfManagedSnapshotCreateCompletion
     {
         $id = $this->ffi->new("rados_snap_t");
-        $completion = new SelfManagedSnapshotCreateOperationCompletion($id, $this);
+        $completion = new SelfManagedSnapshotCreateCompletion($id, $this);
         RadosObjectException::handle($this->ffi->rados_aio_ioctx_selfmanaged_snap_create($this->getCData(), FFI::addr($id), $completion->getCData()));
         return $completion;
     }

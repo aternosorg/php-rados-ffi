@@ -5,12 +5,12 @@ namespace Aternos\Rados\Completion;
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Exception\CompletionException;
 use Aternos\Rados\Exception\RadosException;
-use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\Buffer\Buffer;
 
 /**
- * @extends OperationCompletion<string>
+ * @extends ResultCompletion<string>
  */
-class StringLengthReturnValueCompletion extends OperationCompletion
+class StringLengthReturnValueCompletion extends ResultCompletion
 {
     /**
      * @param Buffer $buffer

@@ -6,4 +6,10 @@ struct timeval
   suseconds_t tv_usec;
 };
 
+struct timespec
+{
+  time_t tv_sec;
+  long int tv_nsec;
+};
+
 #include <rados/librados.h>

@@ -5,6 +5,7 @@ namespace Aternos\Rados\Util;
 use Aternos\Rados\Exception\RadosException;
 use FFI;
 use FFI\CData;
+use RuntimeException;
 use WeakMap;
 
 abstract class WrappedType
@@ -15,36 +16,8 @@ abstract class WrappedType
     protected WeakMap $children;
     private bool $isBeingReleased = false;
     private bool $released = false;
-    protected CData $data;
+    private CData $data;
     protected FFI $ffi;
-
-    /**
-     * @param FFI $ffi
-     * @param array $array
-     * @return CData
-     */
-    protected static function createStringArray(FFI $ffi, array $array): CData
-    {
-        $result = $ffi->new(FFI::arrayType($ffi->type("char*"), [count($array)]));
-        foreach ($array as $i => $elem) {
-            $type = FFI::arrayType($ffi->type("char"), [strlen($elem) + 1]);
-            $value = $ffi->new($type, false);
-            FFI::memcpy($value, $elem . "\0", strlen($elem) + 1);
-            $result[$i] = $value;
-        }
-        return $result;
-    }
-
-    /**
-     * @param CData $array
-     * @return void
-     */
-    protected static function freeStringArray(CData $array): void
-    {
-        foreach ($array as $value) {
-            FFI::free($value);
-        }
-    }
 
     /**
      * @param CData $data
@@ -67,7 +40,6 @@ abstract class WrappedType
      * Get the wrapped CData object
      *
      * @return CData
-     * @throws RadosException
      * @internal This method is used internally and should not be called manually
      */
     public function getCData(): CData
@@ -81,13 +53,12 @@ abstract class WrappedType
      * Still checks that the object has not been released
      *
      * @return CData
-     * @throws RadosException
      * @internal This method is used internally and should not be called manually
      */
     protected function getCDataUnsafe(): CData
     {
         if ($this->isReleased()) {
-            throw new RadosException("This object has been released and is no longer valid");
+            throw new RuntimeException("This object has been released and is no longer valid");
         }
         return $this->data;
     }
@@ -119,12 +90,11 @@ abstract class WrappedType
 
     /**
      * @return void
-     * @throws RadosException
      */
     protected function checkValid(): void
     {
         if (!$this->isValid()) {
-            throw new RadosException("This object has been released and is no longer valid");
+            throw new RuntimeException("This object has been released and is no longer valid");
         }
     }
 

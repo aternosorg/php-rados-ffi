@@ -5,90 +5,29 @@ namespace Aternos\Rados\Completion;
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Exception\CompletionException;
 use Aternos\Rados\Exception\RadosException;
-use FFI;
+use Aternos\Rados\Operation\OperationTask;
 
 /**
- * @template T
+ * @extends ResultCompletion<OperationTask[]>
  */
-abstract class OperationCompletion extends Completion
+class OperationCompletion extends ResultCompletion
 {
     /**
-     * @var T $result
-     */
-    protected mixed $result = null;
-    protected bool $resultParsed = false;
-
-    /**
+     * @param OperationTask[] $tasks
      * @param IOContext $ioContext
-     * @internal Completions are returned from async operations and should not be created manually
      */
-    public function __construct(protected IOContext $ioContext)
+    public function __construct(protected array $tasks, IOContext $ioContext)
     {
-        parent::__construct($this->ioContext->getFFI());
-        $this->ioContext->registerChildObject($this);
-    }
-
-    /**
-     * Cancel async operation
-     *
-     * @return $this
-     * @throws RadosException
-     * @noinspection PhpUndefinedMethodInspection
-     */
-    public function cancel(): static
-    {
-        CompletionException::handle($this->ffi->rados_aio_cancel($this->ioContext->getCData(), $this->getCData()));
-        return $this;
-    }
-
-    /**
-     * @return T
-     */
-    abstract public function parseResult();
-
-    /**
-     * @throws CompletionException
-     * @throws RadosException
-     * @return T
-     */
-    public function getResult()
-    {
-        if (!$this->isComplete()) {
-            throw new CompletionException("Operation is not complete yet");
-        }
-        if (!$this->resultParsed) {
-            $this->result = $this->parseResult();
-            $this->resultParsed = true;
-        }
-        return $this->result;
-    }
-
-    /**
-     * @return T
-     * @throws RadosException
-     */
-    public function waitAndGetResult()
-    {
-        $this->waitForComplete();
-        return $this->getResult();
+        parent::__construct($ioContext);
     }
 
     /**
      * @inheritDoc
-     * @internal This method should not be called directly, use getResult or waitAndGetResult instead
-     */
-    public function getReturnValue(): int
-    {
-        return parent::getReturnValue();
-    }
-
-    /**
-     * @return void
      * @throws RadosException
      */
-    protected function releaseCData(): void
+    public function parseResult()
     {
-        parent::releaseCData();
-        $this->cancel();
+        CompletionException::handle($this->getReturnValue());
+        return $this->tasks;
     }
 }

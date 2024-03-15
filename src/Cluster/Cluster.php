@@ -6,9 +6,9 @@ use Aternos\Rados\Cluster\Pool\Pool;
 use Aternos\Rados\Exception\ClusterException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\Buffer\Buffer;
+use Aternos\Rados\Util\StringArray;
 use Aternos\Rados\Util\WrappedType;
-use Exception;
 use FFI;
 
 class Cluster extends WrappedType
@@ -196,15 +196,8 @@ class Cluster extends WrappedType
      */
     public function configParseArgv(array $args): static
     {
-        $argv = static::createStringArray($this->ffi, $args);
-        try {
-            ClusterException::handle($this->ffi->rados_conf_parse_argv($this->getCData(), count($args), $argv));
-        } catch (Exception $e) {
-            static::freeStringArray($argv);
-            throw $e;
-        }
-
-        static::freeStringArray($argv);
+        $argv = new StringArray($args, $this->ffi);
+        ClusterException::handle($this->ffi->rados_conf_parse_argv($this->getCData(), count($args), $argv->getCData()));
         return $this;
     }
 
@@ -223,15 +216,10 @@ class Cluster extends WrappedType
      */
     public function configParseArgvRemainder(array $args): array
     {
-        $argv = static::createStringArray($this->ffi, $args);
+        $argv = new StringArray($args, $this->ffi);
         $remainder = $this->ffi->new(FFI::arrayType($this->ffi->type("char*"), [count($args)]));
 
-        try {
-            ClusterException::handle($this->ffi->rados_conf_parse_argv_remainder($this->getCData(), count($args), $argv, $remainder));
-        } catch (Exception $e) {
-            static::freeStringArray($argv);
-            throw $e;
-        }
+        ClusterException::handle($this->ffi->rados_conf_parse_argv_remainder($this->getCData(), count($args), $argv->getCData(), $remainder));
 
         $result = [];
         foreach ($remainder as $value) {
@@ -240,7 +228,7 @@ class Cluster extends WrappedType
             }
         }
 
-        static::freeStringArray($argv);
+        $argv->release();
         return $result;
     }
 

@@ -5,17 +5,18 @@ namespace Aternos\Rados\Cluster\Pool\Object;
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Cluster\Pool\Object\Lock\ForeignLock;
 use Aternos\Rados\Cluster\Pool\Object\Lock\Lock;
+use Aternos\Rados\Cluster\Pool\Object\XAttributes\XAttributesIterator;
 use Aternos\Rados\Cluster\Pool\Snapshot\SelfManagedSnapshot;
 use Aternos\Rados\Cluster\Pool\Snapshot\Snapshot;
 use Aternos\Rados\Cluster\Pool\Snapshot\SnapshotInterface;
-use Aternos\Rados\Completion\CompareOperationCompletion;
-use Aternos\Rados\Completion\OsdClassMethodExecuteOperationCompletion;
-use Aternos\Rados\Completion\ReadOperationCompletion;
-use Aternos\Rados\Completion\RemoveOperationCompletion;
-use Aternos\Rados\Completion\StatOperationCompletion;
-use Aternos\Rados\Completion\WriteOperationCompletion;
-use Aternos\Rados\Completion\XAttributes\GetXAttributeOperationCompletion;
-use Aternos\Rados\Completion\XAttributes\GetXAttributesOperationCompletion;
+use Aternos\Rados\Completion\CompareCompletion;
+use Aternos\Rados\Completion\OsdClassMethodExecuteCompletion;
+use Aternos\Rados\Completion\ReadCompletion;
+use Aternos\Rados\Completion\RemoveCompletion;
+use Aternos\Rados\Completion\StatCompletion;
+use Aternos\Rados\Completion\WriteCompletion;
+use Aternos\Rados\Completion\XAttributes\GetXAttributeCompletion;
+use Aternos\Rados\Completion\XAttributes\GetXAttributesCompletion;
 use Aternos\Rados\Completion\XAttributes\RemoveXAttributeCompletion;
 use Aternos\Rados\Completion\XAttributes\SetXAttributeCompletion;
 use Aternos\Rados\Constants\AllocHintFlag;
@@ -25,7 +26,7 @@ use Aternos\Rados\Constants\LockFlag;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\RadosObjectException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\Buffer\Buffer;
 use Aternos\Rados\Util\TimeValue;
 use FFI;
 use InvalidArgumentException;
@@ -181,7 +182,7 @@ class RadosObject
      * @param int $length - the number of bytes to checksum
      * @param int $offset - the offset to start checksumming in the object
      * @param int|null $chunkSize - length-aligned chunk size for checksums
-     * @return string[] - array of checksums, one for each chunk
+     * @return int[] - array of checksums, one for each chunk
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
@@ -330,13 +331,13 @@ class RadosObject
 
     /**
      * Binding for rados_getxattrs, rados_getxattrs_end
-     * Get all extended attributes of an object as an associative array
+     * Get all extended attributes of an object
      *
-     * @return string[]
+     * @return XAttributesIterator
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function getXAttributes(): array
+    public function getXAttributes(): XAttributesIterator
     {
         $ffi = $this->getIOContext()->getFFI();
         $iterator = $ffi->new('rados_xattrs_iter_t');
@@ -346,12 +347,7 @@ class RadosObject
             FFI::addr($iterator)
         ));
 
-        try {
-            return $this->ioContext->getXAttributesFromIterator($iterator);
-        } catch (RadosException $e) {
-            $ffi->rados_getxattrs_end($iterator);
-            throw $e;
-        }
+        return new XAttributesIterator($this->getIOContext(), $iterator, $this->ioContext->getFFI());
     }
 
     /**
@@ -660,11 +656,11 @@ class RadosObject
      * @param int $length
      * @param int $offset
      * @param Buffer|null $readBuffer
-     * @return ReadOperationCompletion
+     * @return ReadCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function readAsync(int $length, int $offset, ?Buffer $readBuffer = null): ReadOperationCompletion
+    public function readAsync(int $length, int $offset, ?Buffer $readBuffer = null): ReadCompletion
     {
         if ($readBuffer !== null && $readBuffer->getSize() >= $length) {
             $buffer = $readBuffer;
@@ -672,7 +668,7 @@ class RadosObject
             $buffer = Buffer::create($this->getIOContext()->getFFI(), $length);
         }
 
-        $completion = new ReadOperationCompletion($buffer, $this->getIOContext());
+        $completion = new ReadCompletion($buffer, $this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_read(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(), $buffer->getCData(),
@@ -687,13 +683,13 @@ class RadosObject
      *
      * @param string $buffer - data to write
      * @param int $offset - offset to start writing at
-     * @return WriteOperationCompletion
+     * @return WriteCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function writeAsync(string $buffer, int $offset): WriteOperationCompletion
+    public function writeAsync(string $buffer, int $offset): WriteCompletion
     {
-        $completion = new WriteOperationCompletion($this->getIOContext());
+        $completion = new WriteCompletion($this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_write(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(), $buffer,
@@ -707,13 +703,13 @@ class RadosObject
      * Asynchronously append data to an object
      *
      * @param string $buffer - data to append
-     * @return WriteOperationCompletion
+     * @return WriteCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function appendAsync(string $buffer): WriteOperationCompletion
+    public function appendAsync(string $buffer): WriteCompletion
     {
-        $completion = new WriteOperationCompletion($this->getIOContext());
+        $completion = new WriteCompletion($this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_append(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(),
@@ -730,13 +726,13 @@ class RadosObject
      * it is atomically truncated and then written.
      *
      * @param string $buffer - data to write
-     * @return WriteOperationCompletion
+     * @return WriteCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function writeFullAsync(string $buffer): WriteOperationCompletion
+    public function writeFullAsync(string $buffer): WriteCompletion
     {
-        $completion = new WriteOperationCompletion($this->getIOContext());
+        $completion = new WriteCompletion($this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_write_full(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(),
@@ -754,13 +750,13 @@ class RadosObject
      * @param string $buffer - data to write
      * @param int $writeLength - the total number of bytes to write
      * @param int $offset - byte offset in the object to begin writing at
-     * @return WriteOperationCompletion
+     * @return WriteCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function writeSameAsync(string $buffer, int $writeLength, int $offset): WriteOperationCompletion
+    public function writeSameAsync(string $buffer, int $writeLength, int $offset): WriteCompletion
     {
-        $completion = new WriteOperationCompletion($this->getIOContext());
+        $completion = new WriteCompletion($this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_writesame(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(),
@@ -774,13 +770,13 @@ class RadosObject
      * Binding for rados_aio_remove
      * Asynchronously remove an object
      *
-     * @return RemoveOperationCompletion
+     * @return RemoveCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function removeAsync(): RemoveOperationCompletion
+    public function removeAsync(): RemoveCompletion
     {
-        $completion = new RemoveOperationCompletion($this->getIOContext());
+        $completion = new RemoveCompletion($this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_remove(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData()
@@ -792,15 +788,15 @@ class RadosObject
      * Binding for rados_aio_stat
      * Asynchronously get object stats (size/mtime)
      *
-     * @return StatOperationCompletion
+     * @return StatCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function statAsync(): StatOperationCompletion
+    public function statAsync(): StatCompletion
     {
         $size = $this->getIOContext()->getFFI()->new("uint64_t");
         $mtime = $this->getIOContext()->getFFI()->new("time_t");
-        $completion = new StatOperationCompletion($size, $mtime, $this->getIOContext());
+        $completion = new StatCompletion($size, $mtime, $this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_stat(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(),
@@ -815,13 +811,13 @@ class RadosObject
      *
      * @param string $compare - buffer containing bytes to be compared with object contents
      * @param int $offset - object byte offset at which to start the comparison
-     * @return CompareOperationCompletion
+     * @return CompareCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function compareExtAsync(string $compare, int $offset): CompareOperationCompletion
+    public function compareExtAsync(string $compare, int $offset): CompareCompletion
     {
-        $completion = new CompareOperationCompletion($this->getIOContext());
+        $completion = new CompareCompletion($this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_cmpext(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(),
@@ -836,14 +832,14 @@ class RadosObject
      *
      * @param string $name - name of the attribute
      * @param int $maxLength - maximum length of the attribute value
-     * @return GetXAttributeOperationCompletion
+     * @return GetXAttributeCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function getXAttributeAsync(string $name, int $maxLength): GetXAttributeOperationCompletion
+    public function getXAttributeAsync(string $name, int $maxLength): GetXAttributeCompletion
     {
         $buffer = Buffer::create($this->getIOContext()->getFFI(), $maxLength);
-        $completion = new GetXAttributeOperationCompletion($buffer, $this->getIOContext());
+        $completion = new GetXAttributeCompletion($buffer, $this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_getxattr(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(),
@@ -893,15 +889,15 @@ class RadosObject
     /**
      * Asynchronously get all extended attributes of an object as an associative array
      *
-     * @return GetXAttributesOperationCompletion
+     * @return GetXAttributesCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function getXAttributesAsync(): GetXAttributesOperationCompletion
+    public function getXAttributesAsync(): GetXAttributesCompletion
     {
         $ffi = $this->getIOContext()->getFFI();
         $iterator = $ffi->new('rados_xattrs_iter_t');
-        $completion = new GetXAttributesOperationCompletion($iterator, $this->getIOContext());
+        $completion = new GetXAttributesCompletion($iterator, $this->getIOContext());
         RadosObjectException::handle($ffi->rados_aio_getxattrs(
             $this->getIOContext()->getCData(),
             $this->getId(),
@@ -927,18 +923,18 @@ class RadosObject
      * @param string $input - input data for the method
      * @param int $maxOutputSize - maximum size of the output buffer
      * @param Buffer|null $outputBuffer - Optional: temporary buffer to read into.
-     * @return OsdClassMethodExecuteOperationCompletion
+     * @return OsdClassMethodExecuteCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function executeAsync(string $class, string $method, string $input, int $maxOutputSize, ?Buffer $outputBuffer = null): OsdClassMethodExecuteOperationCompletion
+    public function executeAsync(string $class, string $method, string $input, int $maxOutputSize, ?Buffer $outputBuffer = null): OsdClassMethodExecuteCompletion
     {
         if ($outputBuffer !== null && $outputBuffer->getSize() >= $maxOutputSize) {
             $buffer = $outputBuffer;
         } else {
             $buffer = Buffer::create($this->getIOContext()->getFFI(), $maxOutputSize);
         }
-        $completion = new OsdClassMethodExecuteOperationCompletion($buffer, $this->getIOContext());
+        $completion = new OsdClassMethodExecuteCompletion($buffer, $this->getIOContext());
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_exec(
             $this->getIOContext()->getCData(),
             $this->getId(),

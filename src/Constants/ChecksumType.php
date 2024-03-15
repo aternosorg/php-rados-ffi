@@ -8,9 +8,9 @@ enum ChecksumType: string implements EnumGetCValueInterface
 {
     use EnumGetCValueTrait;
 
-    case XXHASH32 = "LIBRADOS_CHECKSUM_TYPE_XXHASH32";
-    case XXHASH64 = "LIBRADOS_CHECKSUM_TYPE_XXHASH64";
-    case CRC32C = "LIBRADOS_CHECKSUM_TYPE_CRC32C";
+    case XXHash32 = "LIBRADOS_CHECKSUM_TYPE_XXHASH32";
+    case XHash64 = "LIBRADOS_CHECKSUM_TYPE_XXHASH64";
+    case Crc32c = "LIBRADOS_CHECKSUM_TYPE_CRC32C";
 
     /**
      * Get the length of the checksum in bytes
@@ -20,8 +20,8 @@ enum ChecksumType: string implements EnumGetCValueInterface
     public function getLength(): int
     {
         return match ($this) {
-            self::XXHASH32, self::CRC32C => 4,
-            self::XXHASH64 => 8,
+            self::XXHash32, self::Crc32c => 4,
+            self::XHash64 => 8,
         };
     }
 
@@ -49,7 +49,7 @@ enum ChecksumType: string implements EnumGetCValueInterface
 
     /**
      * @param string $packed
-     * @return array
+     * @return int[]
      * @throws RadosException
      */
     public function unpack(string $packed): array

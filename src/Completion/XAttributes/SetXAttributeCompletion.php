@@ -2,9 +2,9 @@
 
 namespace Aternos\Rados\Completion\XAttributes;
 
-use Aternos\Rados\Completion\VoidErrorHandlingOperationCompletion;
+use Aternos\Rados\Completion\VoidErrorHandlingCompletion;
 
-class SetXAttributeCompletion extends VoidErrorHandlingOperationCompletion
+class SetXAttributeCompletion extends VoidErrorHandlingCompletion
 {
 
 }

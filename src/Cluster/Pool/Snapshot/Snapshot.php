@@ -6,7 +6,7 @@ use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\SnapshotException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\Buffer\Buffer;
 use FFI;
 use InvalidArgumentException;
 

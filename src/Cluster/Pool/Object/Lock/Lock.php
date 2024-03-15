@@ -4,7 +4,7 @@ namespace Aternos\Rados\Cluster\Pool\Object\Lock;
 
 use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Cluster\Pool\Object\RadosObject;
-use Aternos\Rados\Completion\UnlockOperationCompletion;
+use Aternos\Rados\Completion\UnlockCompletion;
 use Aternos\Rados\Constants\LockFlag;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\RadosObjectException;
@@ -75,13 +75,13 @@ class Lock extends AbstractLock
      * Binding for rados_aio_unlock
      * Asynchronous release a shared or exclusive lock on an object.
      *
-     * @return UnlockOperationCompletion
+     * @return UnlockCompletion
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public function unlockAsync(): UnlockOperationCompletion
+    public function unlockAsync(): UnlockCompletion
     {
-        $completion = new UnlockOperationCompletion($this->ioContext);
+        $completion = new UnlockCompletion($this->ioContext);
         RadosObjectException::handle($this->getIoContext()->getFFI()->rados_aio_unlock(
             $this->ioContext->getCData(), $this->getObject()->getId(),
             $this->name, $this->cookie,
@@ -107,7 +107,7 @@ class Lock extends AbstractLock
         }
 
         $durationValue = $duration?->createCData($this->getIoContext()->getFFI());
-        $flags = $mustRenew ? LockFlag::MUST_RENEW->value : LockFlag::MAY_RENEW->value;
+        $flags = $mustRenew ? LockFlag::MustRenew->value : LockFlag::MayRenew->value;
         if ($this->isExclusive()) {
             RadosObjectException::handle($this->getIOContext()->getFFI()->rados_lock_exclusive(
                 $this->getIOContext()->getCData(), $this->getObject()->getId(),

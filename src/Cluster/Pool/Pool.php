@@ -6,7 +6,7 @@ use Aternos\Rados\Cluster\Cluster;
 use Aternos\Rados\Exception\PoolException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
-use Aternos\Rados\Util\Buffer;
+use Aternos\Rados\Util\Buffer\Buffer;
 use FFI;
 use InvalidArgumentException;
 
