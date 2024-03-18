@@ -6,11 +6,11 @@ class AttributePair
 {
     /**
      * @param string $key
-     * @param string $value
+     * @param string|null $value
      */
     public function __construct(
         protected string $key,
-        protected string $value
+        protected ?string $value
     )
     {
     }
@@ -24,9 +24,9 @@ class AttributePair
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getValue(): string
+    public function getValue(): ?string
     {
         return $this->value;
     }

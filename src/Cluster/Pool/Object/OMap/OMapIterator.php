@@ -53,13 +53,13 @@ class OMapIterator extends WrappedType implements Iterator, Countable
             FFI::addr($keyLength),
             FFI::addr($valueLength)
         ));
-        if (FFI::isNull($key) || FFI::isNull($value)) {
+        if (FFI::isNull($key)) {
             return null;
         }
 
         return new AttributePair(
             FFI::string($key, $keyLength->cdata),
-            FFI::string($value, $valueLength->cdata)
+            FFI::isNull($value) ? null : FFI::string($value, $valueLength->cdata)
         );
     }
 
@@ -67,7 +67,7 @@ class OMapIterator extends WrappedType implements Iterator, Countable
      * @inheritDoc
      * @throws RadosException
      */
-    public function current(): string
+    public function current(): ?string
     {
         if ($this->current === null && !$this->end) {
             $this->next();

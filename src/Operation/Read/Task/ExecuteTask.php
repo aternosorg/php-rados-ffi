@@ -26,6 +26,7 @@ class ExecuteTask extends WriteOperationTask
      * @param string $method - name of the method
      * @param string $input - input buffer
      * @param Buffer|null $outputBuffer - Optional: user-provided buffer to read into
+     * If provided, but too small for the result, the operation will fail
      */
     public function __construct(
         protected string $class,

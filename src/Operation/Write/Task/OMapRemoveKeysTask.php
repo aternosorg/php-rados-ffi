@@ -6,6 +6,7 @@ use Aternos\Rados\Operation\Operation;
 use Aternos\Rados\Operation\Write\WriteOperationTask;
 use Aternos\Rados\Util\StringArray;
 use FFI;
+use InvalidArgumentException;
 
 /**
  * Remove key/value pairs from an object
@@ -21,6 +22,11 @@ class OMapRemoveKeysTask extends WriteOperationTask
         protected array $keys
     )
     {
+        foreach ($this->keys as $key) {
+            if (!is_string($key)) {
+                throw new InvalidArgumentException("All elements of the array must be strings");
+            }
+        }
     }
 
     /**
