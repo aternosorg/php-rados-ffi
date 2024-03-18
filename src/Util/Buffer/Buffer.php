@@ -6,6 +6,7 @@ use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
+use RuntimeException;
 
 class Buffer extends WrappedType
 {
@@ -40,6 +41,19 @@ class Buffer extends WrappedType
     public function __construct(protected int $size, CData $data, FFI $ffi)
     {
         parent::__construct($data, $ffi);
+    }
+
+    /**
+     * @param string $data
+     * @return $this
+     */
+    public function write(string $data): static
+    {
+        if (strlen($data) > $this->size) {
+            throw new RuntimeException("Buffer overflow");
+        }
+        FFI::memcpy($this->getCData(), $data, strlen($data));
+        return $this;
     }
 
     /**

@@ -7,9 +7,11 @@ use Aternos\Rados\Exception\ClusterException;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Generated\Errno;
 use Aternos\Rados\Util\Buffer\Buffer;
+use Aternos\Rados\Util\Buffer\RadosAllocatedBuffer;
 use Aternos\Rados\Util\StringArray;
 use Aternos\Rados\Util\WrappedType;
 use FFI;
+use InvalidArgumentException;
 
 class Cluster extends WrappedType
 {
@@ -521,11 +523,394 @@ class Cluster extends WrappedType
     }
 
     /**
+     * Binding for rados_blacklist_add
+     * Blacklists the specified client from the OSDs
+     *
+     * @param string $clientAddress
+     * @param int $expireSeconds
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function blacklistClient(string $clientAddress, int $expireSeconds): static
+    {
+        ClusterException::handle($this->ffi->rados_blacklist_add(
+            $this->getCData(),
+            $clientAddress,
+            $expireSeconds
+        ));
+        return $this;
+    }
+
+    /**
+     * Binding for rados_getaddrs
+     * Gets addresses of the RADOS session, suitable for blacklisting.
+     *
+     * @return string
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function getAddress(): string
+    {
+        $result = $this->ffi->new("char*");
+        ClusterException::handle($this->ffi->rados_getaddrs($this->getCData(), FFI::addr($result)));
+        return FFI::string($result);
+    }
+
+    /**
      * @return bool
      */
     public function isConnected(): bool
     {
         return $this->connected;
+    }
+
+    /**
+     * Binding for rados_mon_command
+     * Send monitor command.
+     *
+     * @note Takes command string in carefully-formatted JSON; must match
+     * defined commands, types, etc.
+     *
+     * @param string[] $commands - an array of strings representing the command
+     * @param string $input - any bulk input data (crush map, etc.)
+     * @return CommandResult
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function sendMonitorCommand(array $commands, string $input): CommandResult
+    {
+        $outputBuffer = $this->ffi->new("char*");
+        $outputLength = $this->ffi->new("size_t");
+        $statusBuffer = $this->ffi->new("char*");
+        $statusLength = $this->ffi->new("size_t");
+
+        $commandData = new StringArray($commands, $this->ffi);
+
+        ClusterException::handle($this->ffi->rados_mon_command(
+            $this->getCData(),
+            $commandData->getCData(),
+            count($commands),
+            $input,
+            strlen($input),
+            FFI::addr($outputBuffer),
+            FFI::addr($outputLength),
+            FFI::addr($statusBuffer),
+            FFI::addr($statusLength)
+        ));
+
+        $status = FFI::string($statusBuffer, $statusLength->cdata);
+        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+
+        $this->ffi->rados_buffer_free($outputBuffer);
+
+        return new CommandResult(
+            $status,
+            $output
+        );
+    }
+
+    /**
+     * Binding for rados_mgr_command
+     * Send ceph-mgr command.
+     *
+     * @note Takes command string in carefully-formatted JSON; must match
+     * defined commands, types, etc.
+     *
+     * @param string[] $commands - an array of strings representing the command
+     * @param string $input - any bulk input data (crush map, etc.)
+     * @return CommandResult
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function sendManagerCommand(array $commands, string $input): CommandResult
+    {
+        $outputBuffer = $this->ffi->new("char*");
+        $outputLength = $this->ffi->new("size_t");
+        $statusBuffer = $this->ffi->new("char*");
+        $statusLength = $this->ffi->new("size_t");
+
+        $commandData = new StringArray($commands, $this->ffi);
+
+        ClusterException::handle($this->ffi->rados_mgr_command(
+            $this->getCData(),
+            $commandData->getCData(),
+            count($commands),
+            $input,
+            strlen($input),
+            FFI::addr($outputBuffer),
+            FFI::addr($outputLength),
+            FFI::addr($statusBuffer),
+            FFI::addr($statusLength)
+        ));
+
+        $status = FFI::string($statusBuffer, $statusLength->cdata);
+        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+
+        $this->ffi->rados_buffer_free($outputBuffer);
+
+        return new CommandResult(
+            $status,
+            $output
+        );
+    }
+
+    /**
+     * Binding for rados_mgr_command_target
+     * Send ceph-mgr tell command.
+     *
+     * @note Takes command string in carefully-formatted JSON; must match
+     * defined commands, types, etc.
+     *
+     * @param string $name - mgr name to target
+     * @param string[] $commands - an array of strings representing the command
+     * @param string $input - any bulk input data (crush map, etc.)
+     * @return CommandResult
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function sendManagerTargetCommand(string $name, array $commands, string $input): CommandResult
+    {
+        $outputBuffer = $this->ffi->new("char*");
+        $outputLength = $this->ffi->new("size_t");
+        $statusBuffer = $this->ffi->new("char*");
+        $statusLength = $this->ffi->new("size_t");
+
+        $commandData = new StringArray($commands, $this->ffi);
+
+        ClusterException::handle($this->ffi->rados_mgr_command_target(
+            $this->getCData(),
+            $name,
+            $commandData->getCData(),
+            count($commands),
+            $input,
+            strlen($input),
+            FFI::addr($outputBuffer),
+            FFI::addr($outputLength),
+            FFI::addr($statusBuffer),
+            FFI::addr($statusLength)
+        ));
+
+        $status = FFI::string($statusBuffer, $statusLength->cdata);
+        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+
+        $this->ffi->rados_buffer_free($outputBuffer);
+
+        return new CommandResult(
+            $status,
+            $output
+        );
+    }
+
+    /**
+     * Binding for rados_mon_command_target
+     * Send monitor command to a specific monitor.
+     *
+     * @note Takes command string in carefully-formatted JSON; must match
+     * defined commands, types, etc.
+     *
+     * @param string $name - mon name to target
+     * @param string[] $commands - an array of strings representing the command
+     * @param string $input - any bulk input data (crush map, etc.)
+     * @return CommandResult
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function sendMonitorTargetCommand(string $name, array $commands, string $input): CommandResult
+    {
+        $outputBuffer = $this->ffi->new("char*");
+        $outputLength = $this->ffi->new("size_t");
+        $statusBuffer = $this->ffi->new("char*");
+        $statusLength = $this->ffi->new("size_t");
+
+        $commandData = new StringArray($commands, $this->ffi);
+
+        ClusterException::handle($this->ffi->rados_mon_command_target(
+            $this->getCData(),
+            $name,
+            $commandData->getCData(),
+            count($commands),
+            $input,
+            strlen($input),
+            FFI::addr($outputBuffer),
+            FFI::addr($outputLength),
+            FFI::addr($statusBuffer),
+            FFI::addr($statusLength)
+        ));
+
+        $status = FFI::string($statusBuffer, $statusLength->cdata);
+        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+
+        $this->ffi->rados_buffer_free($outputBuffer);
+
+        return new CommandResult(
+            $status,
+            $output
+        );
+    }
+
+    /**
+     * Binding for rados_osd_command
+     * Send osd command.
+     *
+     * @note Takes command string in carefully-formatted JSON; must match
+     * defined commands, types, etc.
+     *
+     * @param int $osdId - osd id to target
+     * @param string[] $commands - an array of strings representing the command
+     * @param string $input - any bulk input data (crush map, etc.)
+     * @return CommandResult
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function sendOsdCommand(int $osdId, array $commands, string $input): CommandResult
+    {
+        $outputBuffer = $this->ffi->new("char*");
+        $outputLength = $this->ffi->new("size_t");
+        $statusBuffer = $this->ffi->new("char*");
+        $statusLength = $this->ffi->new("size_t");
+
+        $commandData = new StringArray($commands, $this->ffi);
+
+        ClusterException::handle($this->ffi->rados_osd_command(
+            $this->getCData(),
+            $osdId,
+            $commandData->getCData(),
+            count($commands),
+            $input,
+            strlen($input),
+            FFI::addr($outputBuffer),
+            FFI::addr($outputLength),
+            FFI::addr($statusBuffer),
+            FFI::addr($statusLength)
+        ));
+
+        $status = FFI::string($statusBuffer, $statusLength->cdata);
+        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+
+        $this->ffi->rados_buffer_free($outputBuffer);
+
+        return new CommandResult(
+            $status,
+            $output
+        );
+    }
+
+    /**
+     * Binding for rados_pg_command
+     * Send pg command.
+     *
+     * @note Takes command string in carefully-formatted JSON; must match
+     * defined commands, types, etc.
+     *
+     * @param string $pgString - pg to target
+     * @param string[] $commands - an array of strings representing the command
+     * @param string $input - any bulk input data (crush map, etc.)
+     * @return CommandResult
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function sendPgCommand(string $pgString, array $commands, string $input): CommandResult
+    {
+        $outputBuffer = $this->ffi->new("char*");
+        $outputLength = $this->ffi->new("size_t");
+        $statusBuffer = $this->ffi->new("char*");
+        $statusLength = $this->ffi->new("size_t");
+
+        $commandData = new StringArray($commands, $this->ffi);
+
+        ClusterException::handle($this->ffi->rados_pg_command(
+            $this->getCData(),
+            $pgString,
+            $commandData->getCData(),
+            count($commands),
+            $input,
+            strlen($input),
+            FFI::addr($outputBuffer),
+            FFI::addr($outputLength),
+            FFI::addr($statusBuffer),
+            FFI::addr($statusLength)
+        ));
+
+        $status = FFI::string($statusBuffer, $statusLength->cdata);
+        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+
+        $this->ffi->rados_buffer_free($outputBuffer);
+
+        return new CommandResult(
+            $status,
+            $output
+        );
+    }
+
+    /**
+     * Binding for rados_service_register
+     * Register daemon instance for a service
+     *
+     * Register us as a daemon providing a particular service.  We identify
+     * the service (e.g., 'rgw') and our instance name (e.g., 'rgw.$hostname').
+     * The metadata is an associative array of keys and values with arbitrary static metdata
+     * for this instance.
+     *
+     * For the lifetime of the librados instance, regular beacons will be sent
+     * to the cluster to maintain our registration in the service map.
+     *
+     * @param string $serviceName - service name
+     * @param string $instanceName - daemon instance name
+     * @param string[] $metadata - static daemon metadata as an associative array
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function registerService(string $serviceName, string $instanceName, array $metadata): static
+    {
+        $meta = "";
+        foreach ($metadata as $key => $value) {
+            if (!is_string($key) || !is_string($value)) {
+                throw new InvalidArgumentException("Metadata keys and values must be strings");
+            }
+            $meta .= $key . "\0" . $value . "\0";
+        }
+        $meta .= "\0";
+
+        ClusterException::handle($this->ffi->rados_service_register(
+            $this->getCData(),
+            $serviceName,
+            $instanceName,
+            $meta
+        ));
+
+        return $this;
+    }
+
+    /**
+     * Binding for rados_service_update_status
+     * Update daemon status
+     *
+     * Update our mutable status information in the service map.
+     *
+     * @param string[] $status - mutable daemon status as an associative array
+     * @return $this
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function updateServiceStatus(array $status): static
+    {
+        $statusData = "";
+        foreach ($status as $key => $value) {
+            if (!is_string($key) || !is_string($value)) {
+                throw new InvalidArgumentException("Status data keys and values must be strings");
+            }
+            $statusData .= $key . "\0" . $value . "\0";
+        }
+        $statusData .= "\0";
+
+        ClusterException::handle($this->ffi->rados_service_update_status(
+            $this->getCData(),
+            $statusData
+        ));
+
+        return $this;
     }
 
     /**

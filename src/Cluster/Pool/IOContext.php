@@ -462,4 +462,71 @@ class IOContext extends WrappedType
         }
         return $snapshots;
     }
+
+    /**
+     * Binding for rados_set_pool_full_try
+     * Undocumented in librados, no idea what this does
+     *
+     * @return $this
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function setPoolFullTry(): static
+    {
+        $this->ffi->rados_set_pool_full_try($this->getCData());
+        return $this;
+    }
+
+    /**
+     * Binding for rados_unset_pool_full_try
+     * Undocumented in librados, no idea what this does
+     *
+     * @return $this
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function unsetPoolFullTry(): static
+    {
+        $this->ffi->rados_unset_pool_full_try($this->getCData());
+        return $this;
+    }
+
+    /**
+     * Get an application by name
+     *
+     * @note This method does not check if the application exists, it merely creates an application object
+     *
+     * @param string $name
+     * @return Application
+     */
+    public function getApplication(string $name): Application
+    {
+        return new Application($this, $name);
+    }
+
+    /**
+     * Binding for rados_application_list
+     * List all enabled applications
+     *
+     * @return Application[]
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function listEnabledApplications(): array
+    {
+        $valueLength = $this->ffi->new("size_t");
+        $length = 512;
+        do {
+            $buffer = Buffer::create($this->ffi, $length);
+            $valueLength->cdata = $length;
+            $res = $this->ffi->rados_application_list($this->getCData(), $buffer->getCData(), FFI::addr($valueLength));
+            $length = Buffer::grow($length);
+        } while (-$res === Errno::ERANGE->value);
+        IOContextException::handle($res);
+
+        $result = [];
+        foreach ($buffer->readNullTerminatedStringList($valueLength->cdata, false) as $name) {
+            $result[] = new Application($this, $name);
+        }
+
+        return $result;
+    }
 }

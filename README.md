@@ -139,14 +139,7 @@ try {
 
 ### Available Rados features
 This library aims to implement the full librados API. 
-There are, however, some features that are not yet implemented, 
-and features that can't be implemented due to limitations in PHP's FFI.
-
-#### Planned, but not yet implemented
-- Applications
-- Client blacklist
-- mon/mgr/osd/pg commands
-- Register as service
+There are, however, some features can't be implemented due to limitations in PHP's FFI system.
 
 #### Not planned
 - Callback functions for completions
