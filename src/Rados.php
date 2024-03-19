@@ -5,6 +5,9 @@ namespace Aternos\Rados;
 use Aternos\Rados\Cluster\Cluster;
 use Aternos\Rados\Cluster\ClusterConfig;
 use Aternos\Rados\Exception\RadosException;
+use Aternos\Rados\Operation\Read\ReadOperation;
+use Aternos\Rados\Operation\Write\WriteOperation;
+use Aternos\Rados\Util\Buffer\Buffer;
 use FFI;
 
 class Rados
@@ -25,6 +28,13 @@ class Rados
             static::$instance = new static();
         }
         return static::$instance;
+    }
+
+    /**
+     * @internal Use Rados::getInstance() to get an instance
+     */
+    public function __construct()
+    {
     }
 
     /**
@@ -143,6 +153,35 @@ class Rados
             throw new RadosException("Rados is not initialized");
         }
         return Cluster::createWithContext($this->ffi, $config);
+    }
+
+    /**
+     * Create a new buffer
+     *
+     * @param int $size
+     * @return Buffer
+     */
+    public function createBuffer(int $size): Buffer
+    {
+        return Buffer::create($this->ffi, $size);
+    }
+
+    /**
+     * Create a new read operation
+     *
+     * @return ReadOperation
+     */
+    public function createReadOperation(): ReadOperation
+    {
+        return ReadOperation::create($this->ffi);
+    }
+
+    /**
+     * @return WriteOperation
+     */
+    public function createWriteOperation(): WriteOperation
+    {
+        return WriteOperation::create($this->ffi);
     }
 
     /**

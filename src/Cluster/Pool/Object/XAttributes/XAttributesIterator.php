@@ -8,6 +8,7 @@ use Aternos\Rados\Exception\XAttributeIteratorException;
 use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
+use Iterator;
 
 /**
  * Class XAttributes
@@ -15,7 +16,7 @@ use FFI\CData;
  * @note This iterator does not implement the rewind method as it is not possible to rewind an xattribute iterator
  * It can therefore only be used once
  */
-class XAttributesIterator extends WrappedType implements \Iterator
+class XAttributesIterator extends WrappedType implements Iterator
 {
     protected ?AttributePair $current = null;
     protected bool $end = false;

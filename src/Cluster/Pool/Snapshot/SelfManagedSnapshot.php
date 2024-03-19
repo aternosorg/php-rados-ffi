@@ -45,6 +45,7 @@ class SelfManagedSnapshot implements SnapshotInterface
     /**
      * @return SelfManagedSnapshotRemoveCompletion
      * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function removeAsync(): SelfManagedSnapshotRemoveCompletion
     {

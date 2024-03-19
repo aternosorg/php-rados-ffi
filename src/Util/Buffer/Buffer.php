@@ -25,6 +25,7 @@ class Buffer extends WrappedType
      * @param FFI $ffi
      * @param int $size
      * @return static
+     * @internal Use Rados::createBuffer instead
      */
     public static function create(FFI $ffi, int $size): static
     {
@@ -36,7 +37,7 @@ class Buffer extends WrappedType
      * @param int $size
      * @param CData $data
      * @param FFI $ffi
-     * @internal Use Buffer::create to create a new buffer
+     * @internal Use Rados::createBuffer instead
      */
     public function __construct(protected int $size, CData $data, FFI $ffi)
     {

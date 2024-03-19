@@ -31,6 +31,6 @@ class GetXAttributesCompletion extends ResultCompletion
     public function parseResult(): XAttributesIterator
     {
         CompletionException::handle($this->getReturnValue());
-        return new XAttributesIterator($this->ioContext, $this->iterator, $this->ioContext->getFFI());
+        return new XAttributesIterator($this->iterator, $this->ioContext->getFFI());
     }
 }

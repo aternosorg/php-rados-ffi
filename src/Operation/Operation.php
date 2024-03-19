@@ -46,7 +46,7 @@ abstract class Operation extends WrappedType
      * @param OperationFlag[] $flags
      * @return OperationCompletion
      */
-    abstract public function operatorAsync(RadosObject $object, ?TimeSpec $mtime = null, array $flags = []): OperationCompletion;
+    abstract public function operateAsync(RadosObject $object, ?TimeSpec $mtime = null, array $flags = []): OperationCompletion;
 
     /**
      * @return OperationTask[]

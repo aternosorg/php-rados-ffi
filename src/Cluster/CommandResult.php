@@ -2,17 +2,15 @@
 
 namespace Aternos\Rados\Cluster;
 
-use Aternos\Rados\Util\Buffer\Buffer;
-
 class CommandResult
 {
     /**
      * @param string $status
-     * @param Buffer $output
+     * @param string $output
      */
     public function __construct(
         protected string $status,
-        protected Buffer $output
+        protected string $output
     )
     {
     }
@@ -26,9 +24,9 @@ class CommandResult
     }
 
     /**
-     * @return Buffer
+     * @return string
      */
-    public function getOutput(): Buffer
+    public function getOutput(): string
     {
         return $this->output;
     }

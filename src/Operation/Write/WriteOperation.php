@@ -17,6 +17,7 @@ class WriteOperation extends Operation
      * @param FFI $ffi
      * @return static
      * @noinspection PhpUndefinedMethodInspection
+     * @internal Use Rados::createWriteOperation instead
      */
     public static function create(FFI $ffi): static
     {
@@ -49,8 +50,9 @@ class WriteOperation extends Operation
      *
      * @note librados only accepts mtime values in seconds for async write operations, so nanoSeconds will be ignored
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
-    public function operatorAsync(RadosObject $object, ?TimeSpec $mtime = null, array $flags = []): OperationCompletion
+    public function operateAsync(RadosObject $object, ?TimeSpec $mtime = null, array $flags = []): OperationCompletion
     {
         $flagsValue = OperationFlag::combine($this->ffi, ...$flags);
         $completion = new OperationCompletion($this->getTasks(), $object->getIOContext());

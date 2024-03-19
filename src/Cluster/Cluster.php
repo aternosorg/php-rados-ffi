@@ -386,24 +386,6 @@ class Cluster extends WrappedType
     }
 
     /**
-     * Binding for rados_inconsistent_pg_list
-     * List inconsistent placement groups of the given pool
-     *
-     * @param int $poolId
-     * @return string[]
-     * @throws RadosException
-     * @noinspection PhpUndefinedMethodInspection
-     */
-    public function listInconsistentPG(int $poolId): array
-    {
-        $length = ClusterException::handle($this->ffi->rados_inconsistent_pg_list($this->getCData(), $poolId, null, 0));
-        $buffer = Buffer::create($this->ffi, $length);
-        ClusterException::handle($this->ffi->rados_inconsistent_pg_list($this->getCData(), $poolId, $buffer->getCData(), $length));
-
-        return $buffer->readNullTerminatedStringList($length);
-    }
-
-    /**
      * Binding for rados_cct
      * Get a configuration handle for a rados cluster handle
      *
@@ -485,7 +467,7 @@ class Cluster extends WrappedType
      * Create a pool with a specific CRUSH rule
      *
      * @param string $name - the name of the new pool
-     * @param int $crushRuleNumber - which rule to use for placement in the new pool1
+     * @param int $crushRuleNumber - which rule to use for placement in the new pool
      * @return Pool
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
@@ -600,9 +582,10 @@ class Cluster extends WrappedType
         ));
 
         $status = FFI::string($statusBuffer, $statusLength->cdata);
-        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+        $output = FFI::string($outputBuffer, $outputLength->cdata);
 
         $this->ffi->rados_buffer_free($outputBuffer);
+        $this->ffi->rados_buffer_free($statusBuffer);
 
         return new CommandResult(
             $status,
@@ -645,9 +628,10 @@ class Cluster extends WrappedType
         ));
 
         $status = FFI::string($statusBuffer, $statusLength->cdata);
-        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+        $output = FFI::string($outputBuffer, $outputLength->cdata);
 
         $this->ffi->rados_buffer_free($outputBuffer);
+        $this->ffi->rados_buffer_free($statusBuffer);
 
         return new CommandResult(
             $status,
@@ -692,9 +676,10 @@ class Cluster extends WrappedType
         ));
 
         $status = FFI::string($statusBuffer, $statusLength->cdata);
-        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+        $output = FFI::string($outputBuffer, $outputLength->cdata);
 
         $this->ffi->rados_buffer_free($outputBuffer);
+        $this->ffi->rados_buffer_free($statusBuffer);
 
         return new CommandResult(
             $status,
@@ -739,9 +724,10 @@ class Cluster extends WrappedType
         ));
 
         $status = FFI::string($statusBuffer, $statusLength->cdata);
-        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+        $output = FFI::string($outputBuffer, $outputLength->cdata);
 
         $this->ffi->rados_buffer_free($outputBuffer);
+        $this->ffi->rados_buffer_free($statusBuffer);
 
         return new CommandResult(
             $status,
@@ -786,9 +772,10 @@ class Cluster extends WrappedType
         ));
 
         $status = FFI::string($statusBuffer, $statusLength->cdata);
-        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+        $output = FFI::string($outputBuffer, $outputLength->cdata);
 
         $this->ffi->rados_buffer_free($outputBuffer);
+        $this->ffi->rados_buffer_free($statusBuffer);
 
         return new CommandResult(
             $status,
@@ -833,9 +820,10 @@ class Cluster extends WrappedType
         ));
 
         $status = FFI::string($statusBuffer, $statusLength->cdata);
-        $output = new RadosAllocatedBuffer($outputLength->cdata, $outputBuffer, $this->ffi);
+        $output = FFI::string($outputBuffer, $outputLength->cdata);
 
         $this->ffi->rados_buffer_free($outputBuffer);
+        $this->ffi->rados_buffer_free($statusBuffer);
 
         return new CommandResult(
             $status,

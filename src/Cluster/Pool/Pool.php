@@ -54,6 +54,7 @@ class Pool
      * @param Cluster $cluster
      * @param string|null $name
      * @param int|null $id
+     * @internal Use Cluster::createPool, Cluster::getPool, or Cluster::getPoolById instead
      */
     public function __construct(protected Cluster $cluster, protected ?string $name, protected ?int $id)
     {
@@ -167,5 +168,33 @@ class Pool
             ));
         }
         return new IOContext($this->getCluster(), $context, $this->getCluster()->getFFI());
+    }
+
+    /**
+     * Binding for rados_inconsistent_pg_list
+     * List inconsistent placement groups of the given pool
+     *
+     * @return string[]
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function listInconsistentPGs(): array
+    {
+        $length = PoolException::handle($this->getCluster()->getFFI()->rados_inconsistent_pg_list(
+            $this->getCluster()->getCData(),
+            $this->getId(),
+            null,
+            0
+        ));
+
+        $buffer = Buffer::create($this->getCluster()->getFFI(), $length);
+        PoolException::handle($this->getCluster()->getFFI()->rados_inconsistent_pg_list(
+            $this->getCluster()->getCData(),
+            $this->getId(),
+            $buffer->getCData(),
+            $length
+        ));
+
+        return $buffer->readNullTerminatedStringList($length);
     }
 }

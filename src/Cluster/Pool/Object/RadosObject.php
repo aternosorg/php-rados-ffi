@@ -347,7 +347,7 @@ class RadosObject
             FFI::addr($iterator)
         ));
 
-        return new XAttributesIterator($this->getIOContext(), $iterator, $this->ioContext->getFFI());
+        return new XAttributesIterator($iterator, $this->ioContext->getFFI());
     }
 
     /**
@@ -622,6 +622,7 @@ class RadosObject
      * @param SnapshotInterface $snapshot
      * @return $this
      * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function rollback(SnapshotInterface $snapshot): static
     {

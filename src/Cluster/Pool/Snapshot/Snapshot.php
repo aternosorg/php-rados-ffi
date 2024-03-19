@@ -102,6 +102,7 @@ class Snapshot implements SnapshotInterface
      *
      * @return int
      * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
      */
     public function getTimeStamp(): int
     {

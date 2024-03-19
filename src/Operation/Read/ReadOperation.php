@@ -17,6 +17,7 @@ class ReadOperation extends Operation
      * @param FFI $ffi
      * @return static
      * @noinspection PhpUndefinedMethodInspection
+     * @internal Use Rados::createReadOperation instead
      */
     public static function create(FFI $ffi): static
     {
@@ -46,8 +47,9 @@ class ReadOperation extends Operation
     /**
      * @inheritDoc
      * @noinspection PhpUndefinedMethodInspection
+     * @throws RadosException
      */
-    public function operatorAsync(RadosObject $object, ?TimeSpec $mtime = null, array $flags = []): OperationCompletion
+    public function operateAsync(RadosObject $object, ?TimeSpec $mtime = null, array $flags = []): OperationCompletion
     {
         $flagsValue = OperationFlag::combine($this->ffi, ...$flags);
         $completion = new OperationCompletion($this->getTasks(), $object->getIOContext());
