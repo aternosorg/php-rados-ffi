@@ -191,15 +191,17 @@ class RadosObject
         $checksumLength = $type->getLength();
         $initString = $type->createInitString($initValue);
 
-        if ($chunkSize === null) {
+        if ($chunkSize === null || $chunkSize === $length) {
             $chunkSize = $length;
+            $resultCount = 1;
+        } else {
+            if ($chunkSize <= 0) {
+                throw new InvalidArgumentException("Chunk size must be greater than 0");
+            }
+
+            $resultCount = ceil($length / $chunkSize);
         }
 
-        if ($chunkSize <= 0) {
-            throw new InvalidArgumentException("Chunk size must be greater than 0");
-        }
-
-        $resultCount = ceil($length / $chunkSize);
         $resultLength = $resultCount * $checksumLength + 4;
 
         $checksumBuffer = Buffer::create($this->getIOContext()->getFFI(), $resultLength);

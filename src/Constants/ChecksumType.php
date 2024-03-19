@@ -9,7 +9,7 @@ enum ChecksumType: string implements EnumGetCValueInterface
     use EnumGetCValueTrait;
 
     case XXHash32 = "LIBRADOS_CHECKSUM_TYPE_XXHASH32";
-    case XHash64 = "LIBRADOS_CHECKSUM_TYPE_XXHASH64";
+    case XXHash64 = "LIBRADOS_CHECKSUM_TYPE_XXHASH64";
     case Crc32c = "LIBRADOS_CHECKSUM_TYPE_CRC32C";
 
     /**
@@ -21,7 +21,7 @@ enum ChecksumType: string implements EnumGetCValueInterface
     {
         return match ($this) {
             self::XXHash32, self::Crc32c => 4,
-            self::XHash64 => 8,
+            self::XXHash64 => 8,
         };
     }
 

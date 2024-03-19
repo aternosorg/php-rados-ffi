@@ -16,6 +16,7 @@ class ObjectRange
      * @param IOContext $ioContext
      * @param ObjectCursor $start
      * @param ObjectCursor $end
+     * @internal Use IOContext::getObjectRange() instead
      */
     public function __construct(protected IOContext $ioContext, protected ObjectCursor $start, protected ObjectCursor $end)
     {

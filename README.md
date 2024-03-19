@@ -146,6 +146,14 @@ There are, however, some features can't be implemented due to limitations in PHP
 - Watch/Notify
 - Log callbacks
 
+#### Implemented, but not really supported
+Some librados features are poorly documented to a point where I do not understand what they are supposed to do.
+These features have bindings in this librery, but I can't guarantee that they work as intended.
+Currently, this includes:
+- Self-managed snapshots
+- rados_(un)set_pool_full_try
+
+
 PHP callback functions can be passed to C functions using FFI, 
 but they can only be called (more or less) safely from the main thread.
 Since both completions and watches can be called from any thread, 

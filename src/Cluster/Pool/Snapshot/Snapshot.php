@@ -24,7 +24,7 @@ class Snapshot implements SnapshotInterface
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public static function lookupName(IOContext $ioContext, string $name): int
+    public static function lookupIdByName(IOContext $ioContext, string $name): int
     {
         $id = $ioContext->getFFI()->new("rados_snap_t");
         SnapshotException::handle($ioContext->getFFI()->rados_ioctx_snap_lookup($ioContext->getCData(), $name, FFI::addr($id)));
@@ -41,7 +41,7 @@ class Snapshot implements SnapshotInterface
      * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
-    public static function lookupId(IOContext $ioContext, int $id): string
+    public static function lookupNameById(IOContext $ioContext, int $id): string
     {
         $length = 256;
         $ffi = $ioContext->getFFI();
@@ -50,8 +50,8 @@ class Snapshot implements SnapshotInterface
             $res = $ffi->rados_ioctx_snap_get_name($ioContext->getCData(), $id, $buffer->getCData(), $length);
             $length = Buffer::grow($length);
         } while (-$res === Errno::ERANGE->value);
-        $resultLength = SnapshotException::handle($res);
-        return $buffer->readString($resultLength);
+        SnapshotException::handle($res);
+        return $buffer->readString();
     }
 
     /**
@@ -77,7 +77,7 @@ class Snapshot implements SnapshotInterface
     public function getId(): int
     {
         if ($this->id === null) {
-            $this->id = static::lookupName($this->ioContext, $this->name);
+            $this->id = static::lookupIdByName($this->ioContext, $this->name);
         }
         return $this->id;
     }
@@ -91,7 +91,7 @@ class Snapshot implements SnapshotInterface
     public function getName(): ?string
     {
         if ($this->name === null) {
-            $this->name = static::lookupId($this->ioContext, $this->id);
+            $this->name = static::lookupNameById($this->ioContext, $this->id);
         }
         return $this->name;
     }

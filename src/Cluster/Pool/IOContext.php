@@ -401,7 +401,6 @@ class IOContext extends WrappedType
      * @param SnapshotInterface|null $snapshot - the snapshot to set as the read snapshot,
      * or null for no snapshot (i.e. normal operation)
      * @return $this
-     * @throws RadosException
      * @noinspection PhpUndefinedMethodInspection
      */
     public function setReadSnapshot(?SnapshotInterface $snapshot): static
@@ -410,7 +409,7 @@ class IOContext extends WrappedType
         if ($snapId === null) {
             $snapId = Constants::SNAP_HEAD;
         }
-        IOContextException::handle($this->ffi->rados_ioctx_snap_set_read($this->getCData(), $snapId));
+        $this->ffi->rados_ioctx_snap_set_read($this->getCData(), $snapId);
         return $this;
     }
 
@@ -450,7 +449,7 @@ class IOContext extends WrappedType
     {
         $length = 32;
         do {
-            $buffer = $this->ffi->new($this->ffi->arrayType($this->ffi->type("rados_snap_t"), [$length]));
+            $buffer = $this->ffi->new(FFI::arrayType($this->ffi->type("rados_snap_t"), [$length]));
             $res = $this->ffi->rados_ioctx_snap_list($this->getCData(), $buffer, $length);
             $length = Buffer::grow($length);
         } while (-$res === Errno::ERANGE->value);

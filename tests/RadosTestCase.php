@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Aternos\Rados\Cluster\Cluster;
+use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Cluster\Pool\Pool;
 use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Rados;
@@ -14,6 +15,7 @@ abstract class RadosTestCase extends TestCase
     protected static ?Rados $rados = null;
     protected static ?Cluster $cluster = null;
     protected static array $pools = [];
+    protected ?IOContext $ioContext = null;
 
     public static function tearDownAfterClass(): void
     {
@@ -60,5 +62,17 @@ abstract class RadosTestCase extends TestCase
             static::$pools[static::class] = $this->getCluster()->createPool("ffi-test-" . uniqid());
         }
         return static::$pools[static::class];
+    }
+
+    /**
+     * @return IOContext
+     * @throws RadosException
+     */
+    public function getIOContext(): IOContext
+    {
+        if ($this->ioContext === null) {
+            $this->ioContext = $this->getPool()->createIOContext();
+        }
+        return $this->ioContext;
     }
 }

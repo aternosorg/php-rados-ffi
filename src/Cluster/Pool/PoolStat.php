@@ -76,7 +76,7 @@ class PoolStat
      * Space used in bytes
      * @return int
      */
-    protected function getNumBytes(): int
+    public function getNumBytes(): int
     {
         return $this->numBytes;
     }
@@ -85,7 +85,7 @@ class PoolStat
      * Space used in KB
      * @return int
      */
-    protected function getNumKb(): int
+    public function getNumKb(): int
     {
         return $this->numKb;
     }
@@ -94,7 +94,7 @@ class PoolStat
      * Number of objects in the pool
      * @return int
      */
-    protected function getNumObjects(): int
+    public function getNumObjects(): int
     {
         return $this->numObjects;
     }
@@ -103,7 +103,7 @@ class PoolStat
      * Number of clones of objects
      * @return int
      */
-    protected function getNumObjectClones(): int
+    public function getNumObjectClones(): int
     {
         return $this->numObjectClones;
     }
@@ -112,7 +112,7 @@ class PoolStat
      * NumObjects * numReplicas
      * @return int
      */
-    protected function getNumObjectCopies(): int
+    public function getNumObjectCopies(): int
     {
         return $this->numObjectCopies;
     }
@@ -121,7 +121,7 @@ class PoolStat
      * Number of objects missing on primary
      * @return int
      */
-    protected function getNumObjectsMissingOnPrimary(): int
+    public function getNumObjectsMissingOnPrimary(): int
     {
         return $this->numObjectsMissingOnPrimary;
     }
@@ -130,7 +130,7 @@ class PoolStat
      * Number of objects found on no OSDs
      * @return int
      */
-    protected function getNumObjectsUnfound(): int
+    public function getNumObjectsUnfound(): int
     {
         return $this->numObjectsUnfound;
     }
@@ -140,7 +140,7 @@ class PoolStat
      * (but found on at least one OSD)
      * @return int
      */
-    protected function getNumObjectsDegraded(): int
+    public function getNumObjectsDegraded(): int
     {
         return $this->numObjectsDegraded;
     }
@@ -149,7 +149,7 @@ class PoolStat
      * Number of objects read
      * @return int
      */
-    protected function getNumRd(): int
+    public function getNumRd(): int
     {
         return $this->numRd;
     }
@@ -158,7 +158,7 @@ class PoolStat
      * Objects read in KB
      * @return int
      */
-    protected function getNumRdKb(): int
+    public function getNumRdKb(): int
     {
         return $this->numRdKb;
     }
@@ -167,7 +167,7 @@ class PoolStat
      * Number of objects written
      * @return int
      */
-    protected function getNumWr(): int
+    public function getNumWr(): int
     {
         return $this->numWr;
     }
@@ -176,7 +176,7 @@ class PoolStat
      * Objects written in KB
      * @return int
      */
-    protected function getNumWrKb(): int
+    public function getNumWrKb(): int
     {
         return $this->numWrKb;
     }
@@ -185,7 +185,7 @@ class PoolStat
      * Bytes originally provided by user
      * @return int
      */
-    protected function getNumUserBytes(): int
+    public function getNumUserBytes(): int
     {
         return $this->numUserBytes;
     }
@@ -194,7 +194,7 @@ class PoolStat
      * Bytes passed compression
      * @return int
      */
-    protected function getCompressedBytesOrig(): int
+    public function getCompressedBytesOrig(): int
     {
         return $this->compressedBytesOrig;
     }
@@ -203,7 +203,7 @@ class PoolStat
      * Bytes resulted after compression
      * @return int
      */
-    protected function getCompressedBytes(): int
+    public function getCompressedBytes(): int
     {
         return $this->compressedBytes;
     }
@@ -212,7 +212,7 @@ class PoolStat
      * Bytes allocated at storage
      * @return int
      */
-    protected function getCompressedBytesAlloc(): int
+    public function getCompressedBytesAlloc(): int
     {
         return $this->compressedBytesAlloc;
     }
