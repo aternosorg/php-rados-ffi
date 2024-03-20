@@ -29,6 +29,11 @@ struct timeval
   time_t tv_sec;
   suseconds_t tv_usec;
 };
+struct timespec
+{
+  time_t tv_sec;
+  long int tv_nsec;
+};
 struct obj_watch_t {
   char addr[256];
   int64_t watcher_id;

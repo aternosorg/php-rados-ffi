@@ -2,23 +2,25 @@
 
 namespace Aternos\Rados\Cluster\Pool\Object;
 
+use Aternos\Rados\Util\TimeSpec;
+
 class ObjectStat
 {
     /**
      * @param int $size
-     * @param int $modifiedTime
+     * @param TimeSpec $modifiedTime
      */
     public function __construct(
         protected int $size,
-        protected int $modifiedTime
+        protected TimeSpec $modifiedTime
     )
     {
     }
 
     /**
-     * @return int
+     * @return TimeSpec
      */
-    public function getModifiedTime(): int
+    public function getModifiedTime(): TimeSpec
     {
         return $this->modifiedTime;
     }

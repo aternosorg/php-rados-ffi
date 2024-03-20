@@ -65,4 +65,35 @@ class IOContextTest extends RadosTestCase
     {
         $this->assertIsArray($this->getIOContext()->listEnabledApplications());
     }
+
+    public function testObjectIterator(): void
+    {
+        $objectNames = ["it-test-1", "it-test-2", "it-test-3", "it-test-4", "it-test-5"];
+        foreach ($objectNames as $object) {
+            $this->getIOContext()->getObject($object)->writeFull("test");
+        }
+
+        $objects = [];
+        $test2Cursor = null;
+        $iterator = $this->getIOContext()->createObjectIterator();
+        foreach ($iterator as $cursor => $object) {
+            if ($object->getEntry() === "it-test-2") {
+                $test2Cursor = $cursor;
+            }
+            $objects[] = $object->getEntry();
+        }
+
+        $this->assertTrue(!array_diff($objectNames, $objects));
+
+        // test rewind
+        $objects2 = [];
+        foreach ($iterator as $object) {
+            $objects2[] = $object->getEntry();
+        }
+
+        $this->assertEquals($objects, $objects2);
+
+        $iterator->seekCursor($test2Cursor);
+        $this->assertEquals($iterator->current()->getEntry(), "it-test-2");
+    }
 }

@@ -6,6 +6,7 @@ use Aternos\Rados\Cluster\Pool\IOContext;
 use Aternos\Rados\Cluster\Pool\Object\ObjectStat;
 use Aternos\Rados\Exception\CompletionException;
 use Aternos\Rados\Exception\RadosException;
+use Aternos\Rados\Util\TimeSpec;
 use FFI\CData;
 
 class StatCompletion extends ResultCompletion
@@ -28,6 +29,6 @@ class StatCompletion extends ResultCompletion
     public function parseResult()
     {
         CompletionException::handle($this->getReturnValue());
-        return new ObjectStat($this->size->cdata, $this->mTime->cdata);
+        return new ObjectStat($this->size->cdata, TimeSpec::fromCData($this->mTime));
     }
 }

@@ -27,6 +27,7 @@ use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\RadosObjectException;
 use Aternos\Rados\Generated\Errno;
 use Aternos\Rados\Util\Buffer\Buffer;
+use Aternos\Rados\Util\TimeSpec;
 use Aternos\Rados\Util\TimeValue;
 use FFI;
 use InvalidArgumentException;
@@ -230,6 +231,26 @@ class RadosObject
     {
         RadosObjectException::handle($this->getIOContext()->getFFI()->rados_remove($this->getIOContext()->getCData(), $this->getId()));
         return $this;
+    }
+
+    /**
+     * Binding for rados_stat2
+     * Get object size and most recent update time from the OSD.
+     *
+     * @return ObjectStat
+     * @throws RadosException
+     * @noinspection PhpUndefinedMethodInspection
+     */
+    public function stat(): ObjectStat
+    {
+        $size = $this->getIOContext()->getFFI()->new("uint64_t");
+        $mtime = $this->getIOContext()->getFFI()->new("struct timespec");
+        RadosObjectException::handle($this->getIOContext()->getFFI()->rados_stat2(
+            $this->getIOContext()->getCData(),
+            $this->getId(),
+            FFI::addr($size), FFI::addr($mtime)
+        ));
+        return new ObjectStat($size->cdata, TimeSpec::fromCData($mtime));
     }
 
     /**
@@ -788,7 +809,7 @@ class RadosObject
     }
 
     /**
-     * Binding for rados_aio_stat
+     * Binding for rados_aio_stat2
      * Asynchronously get object stats (size/mtime)
      *
      * @return StatCompletion
@@ -798,9 +819,9 @@ class RadosObject
     public function statAsync(): StatCompletion
     {
         $size = $this->getIOContext()->getFFI()->new("uint64_t");
-        $mtime = $this->getIOContext()->getFFI()->new("time_t");
+        $mtime = $this->getIOContext()->getFFI()->new("struct timespec");
         $completion = new StatCompletion($size, $mtime, $this->getIOContext());
-        RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_stat(
+        RadosObjectException::handle($this->getIOContext()->getFFI()->rados_aio_stat2(
             $this->getIOContext()->getCData(), $this->getId(),
             $completion->getCData(),
             FFI::addr($size), FFI::addr($mtime)
@@ -949,7 +970,4 @@ class RadosObject
 
         return $completion;
     }
-
-    //TODO: read ops
-    //TODO: write ops
 }

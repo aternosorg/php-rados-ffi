@@ -8,6 +8,17 @@ use FFI\CData;
 class TimeSpec
 {
     /**
+     * @param CData $data
+     * @return static
+     * @noinspection PhpUndefinedFieldInspection
+     * @internal Use new TimeSpec() instead
+     */
+    public static function fromCData(CData $data): static
+    {
+        return new static($data->tv_sec, $data->tv_nsec);
+    }
+
+    /**
      * @param int $seconds
      * @param int $nanoseconds
      */
