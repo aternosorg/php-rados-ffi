@@ -39,12 +39,20 @@ function deleteDirectory(string $path): void
     rmdir($path);
 }
 
+echo <<<EOT
+Generate headers for librados
+This script requires a c preprocessor (cpp) to be installed.
+Additionally, librados and librados-dev are required.
+
+EOT;
+
+
 if (!`which cpp`) {
     echo "No CPP preprocessor found in PATH\n";
     exit(1);
 }
 
-$tempDir = sys_get_temp_dir() . "build.php/" . "rados-ffi-" . uniqid();
+$tempDir = sys_get_temp_dir() . "/" . "rados-ffi-" . uniqid();
 @mkdir($tempDir, 0777, true);
 
 foreach (REPLACE_IMPORTS as $import) {

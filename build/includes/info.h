@@ -5,7 +5,7 @@ if this was installed as a dependency using composer.
 
 GENERATED ON {{DATE}}
 
-This file is generated from the librados.h and rados_types.h,
+This file is generated from librados.h and rados_types.h,
 available in the librados-dev package installed when this was generated.
 The source code for these files can be found at https://github.com/ceph/ceph
 
