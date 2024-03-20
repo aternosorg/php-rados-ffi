@@ -120,6 +120,86 @@ is complete and to get the result.
 $result = $completion->waitAndGetResult();
 ```
 
+### Object operations
+
+[Object operations](https://docs.ceph.com/en/latest/rados/api/librados/#breathe-section-title-object-operations) allow 
+performing multiple tasks on an object atomically. Write and read operations can be created by calling 
+`$rados->createWriteOperation()` and `$rados->createReadOperation()` respectively.
+
+```php
+$object = $ioContext->getObject("object1");
+
+$operation = $rados->createWriteOperation();
+$operation->addTask(new \Aternos\Rados\Operation\Common\Task\AssertExistsTask());
+$operation->addTask(new \Aternos\Rados\Operation\Write\Task\AppendTask("Hello, World"));
+$operation->operate($object);
+```
+
+Some tasks, especially in read operations, will return data. This data can be accessed by
+calling `getResult()` on the task object after the operation has been completed.
+
+```php
+$object = $ioContext->getObject("object1");
+$object->writeFull("Hello, World");
+
+$operation = $rados->createReadOperation();
+$task = new \Aternos\Rados\Operation\Read\Task\ReadTask(0, 12);
+$operation->addTask($task);
+$operation->operate($object);
+
+echo $task->getResult() . PHP_EOL;
+```
+
+If a single task in an operation fails, the entire operation will fail.
+This can be avoided by adding the `OperationTaskFlag::FailOK` flag to tasks that are allowed to fail.
+
+```php
+$task = new \Aternos\Rados\Operation\Common\Task\CompareExtTask("Hello_", 0);
+$task->setFlags([\Aternos\Rados\Constants\OperationTaskFlag::FailOK]);
+```
+
+Operations can also be executed asynchronously, using the `operateAsync()` method.
+
+#### Available tasks
+
+##### Common
+
+- `AssertExistsTask`
+- `AssertVersionTask`
+- `CompareExtTask`
+- `CompareXAttributeTask`
+- `OMapCompareTask`
+
+##### Read
+
+- `ChecksumTask`
+- `ExecuteTask` (with output data)
+- `GetXAttributesTask`
+- `OMapGetByKeysTask`
+- `OMapGetKeysTask`
+- `OMapGetTask`
+- `ReadTask`
+- `StatTask`
+
+##### Write
+
+- `AppendTask`
+- `CreateObjectTask`
+- `ExecuteTask` (without output data)
+- `OMapClearTask`
+- `OMapRemoveKeyRangeTask`
+- `OMapRemoveKeysTask`
+- `OMapSetTask`
+- `RemoveTask`
+- `RemoveXAttributeTask`
+- `SetAllocHintTask`
+- `SetXAttributeTask`
+- `TruncateTask`
+- `WriteFullTask`
+- `WriteSameTask`
+- `WriteTask`
+- `ZeroTask`
+
 ### Exceptions and error handling
 
 If a Rados operation fails, it will throw a [`RadosException`](src/Exception/RadosException.php)

@@ -10,7 +10,7 @@ use Aternos\Rados\Operation\Write\WriteOperationTask;
  *
  * @extends WriteOperationTask<null>
  */
-class OMapClearKeyTask extends WriteOperationTask
+class OMapClearTask extends WriteOperationTask
 {
     /**
      * @inheritDoc
