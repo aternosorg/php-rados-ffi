@@ -138,6 +138,8 @@ $operation->operate($object);
 Some tasks, especially in read operations, will return data. This data can be accessed by
 calling `getResult()` on the task object after the operation has been completed.
 
+If the task failed, getResult() may throw an exception.
+
 ```php
 $object = $ioContext->getObject("object1");
 $object->writeFull("Hello, World");
