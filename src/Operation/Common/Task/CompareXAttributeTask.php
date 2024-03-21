@@ -7,7 +7,10 @@ use Aternos\Rados\Operation\Common\CommonOperationTask;
 use Aternos\Rados\Operation\Operation;
 
 /**
- * Ensure that given xattr satisfies comparison.
+ * Ensure that given xattr satisfies comparison,
+ * with the supplied value on the left hand side (i.e.
+ * for OP_LT, the comparison is value < actual_value)
+ *
  * If the comparison is not satisfied, the return code of the
  * operation will be -ECANCELED
  *
@@ -45,7 +48,8 @@ class CompareXAttributeTask extends CommonOperationTask
             $operation->getCData(),
             $this->name,
             $this->operator->getCValue($operation->getFFI()),
-            $this->value
+            $this->value,
+            strlen($this->value)
         );
     }
 

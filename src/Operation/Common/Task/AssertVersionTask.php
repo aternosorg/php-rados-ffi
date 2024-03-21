@@ -7,7 +7,7 @@ use Aternos\Rados\Operation\Operation;
 
 /**
  * Ensure that the object exists and that its internal version
- * number is equal to "ver" before reading. "ver" should be a
+ * number is equal to "ver". "ver" should be a
  * version number previously obtained with rados_get_last_version().
  * - If the object's version is greater than the asserted version
  *   then rados_read_op_operate will return -ERANGE instead of

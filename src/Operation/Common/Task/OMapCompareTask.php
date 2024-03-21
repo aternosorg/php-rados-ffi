@@ -14,6 +14,7 @@ use FFI\CData;
  * Ensure that an omap value satisfies a comparison,
  * with the supplied value on the right hand side (i.e.
  * for OP_LT, the comparison is actual_value < value)
+ * For reasons unknown to me, this is the opposite of how xattr comparison works.
  *
  * @extends CommonOperationTask<null>
  */

@@ -27,7 +27,7 @@ class OperationCompletion extends ResultCompletion
      */
     public function parseResult()
     {
-        CompletionException::handle($this->getReturnValue());
+        CompletionException::handle($this->getReturnValue(), true);
         return $this->tasks;
     }
 }

@@ -25,12 +25,13 @@ class RadosException extends Exception
 
     /**
      * @param int $code
+     * @param bool $throwOnMaxErr
      * @return int
-     * @throws static
+     * @throws RadosException
      */
-    public static function handle(int $code): int
+    public static function handle(int $code, bool $throwOnMaxErr = false): int
     {
-        if ($code < 0 && $code >= -Constants::MAX_ERRNO) {
+        if ($code < 0 && ($code >= -Constants::MAX_ERRNO || $throwOnMaxErr)) {
             throw static::fromErrorCode($code);
         }
         return $code;
