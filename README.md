@@ -19,6 +19,19 @@ This can be done using the `initialize()` method of the [`Rados`](src/Rados.php)
 $rados = \Aternos\Rados\Rados::getInstance()->initialize();
 ```
 
+### Preloading
+
+To preload librados, ensure that FFI preloading is enabled and add the following line to your `opcache.preload` file:
+```php
+\Aternos\Rados\Rados::getInstance()->preload();
+```
+
+Rados can then be initialized by calling `initializePreloaded()` instead of `initialize()`.
+
+```php
+$rados = \Aternos\Rados\Rados::getInstance()->initializePreloaded();
+```
+
 ### Cluster
 
 The [`Rados`](src/Rados.php) instance can then be used to create a [`Cluster`](src/Cluster/Cluster.php) instance, 
@@ -30,7 +43,7 @@ $cluster->configReadFile('/etc/ceph/ceph.conf');
 $cluster->connect();
 ```
 
-Once connected, a [`Cluster`](src/Cluster/Cluster.php) object can be used to perform operations on and 
+Once connected, a [`Cluster`](src/Cluster/Cluster.php) object can be used to perform operations and 
 request information about the cluster.
 It is, for example, possible to ping monitors, request the cluster's ID, or list pools.
 
@@ -138,7 +151,7 @@ $operation->operate($object);
 Some tasks, especially in read operations, will return data. This data can be accessed by
 calling `getResult()` on the task object after the operation has been completed.
 
-If the task failed, getResult() may throw an exception.
+If the task failed, `getResult()` may throw an exception.
 
 ```php
 $object = $ioContext->getObject("object1");
@@ -228,19 +241,17 @@ There are, however, some features can't be implemented due to limitations in PHP
 - Watch/Notify
 - Log callbacks
 
+PHP callback functions can be passed to C functions using FFI,
+but they can only be called (more or less) safely from the main thread.
+Since both completions and watches can be called from any thread,
+using PHP callback functions is not feasible.
+
 #### Implemented, but not really supported
 Some librados features are poorly documented to a point where I do not understand what they are supposed to do.
 These features have bindings in this librery, but I can't guarantee that they work as intended.
 Currently, this includes:
 - Self-managed snapshots
 - rados_(un)set_pool_full_try
-
-
-PHP callback functions can be passed to C functions using FFI, 
-but they can only be called (more or less) safely from the main thread.
-Since both completions and watches can be called from any thread, 
-using PHP callback functions is not feasible.
-
 
 ### How to not segfault
 

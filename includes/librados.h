@@ -3,7 +3,7 @@ This file is generated, do not modify it directly!
 To generate this file, run `./bin/generate-headers`, or `./vendor/bin/generate-headers`
 if this was installed as a dependency using composer.
 
-GENERATED ON 2024-03-12 12:52:36
+GENERATED ON 2024-03-21 11:37:37
 
 This file is generated from librados.h and rados_types.h,
 available in the librados-dev package installed when this was generated.

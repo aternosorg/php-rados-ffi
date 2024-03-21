@@ -74,6 +74,16 @@ class Rados
             return $this;
         }
 
+        $this->ffi = FFI::cdef($this->readHeaders(), "librados.so");
+        $this->initialized = true;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function preload(): static
+    {
         $this->ffi = FFI::load($this->headerPath);
         $this->initialized = true;
         return $this;
@@ -81,7 +91,7 @@ class Rados
 
     /**
      * Initiate Rados from preloaded headers
-     * This requires FFI preloading to be enabled and $rados->initialize()
+     * This requires FFI preloading to be enabled and $rados->preload()
      * to be called in the opcache.preload file
      *
      * See https://www.php.net/manual/en/ffi.examples-complete.php#ffi.examples-complete for details
