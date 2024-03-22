@@ -59,7 +59,7 @@ foreach ($cluster->getPools() as $pool) {
 
 ### Pool
 
-[`Pool`](src/Cluster/Pool/Pool.php) objects contain general information about a pool, and can be used to an [`IOContext`](src/Cluster/Pool/IOContext.php).
+[`Pool`](src/Cluster/Pool/Pool.php) objects contain general information about a pool, and can be used to obtain an [`IOContext`](src/Cluster/Pool/IOContext.php).
 ```php
 $ioContext = $pool->createIOContext();
 ```
@@ -98,9 +98,9 @@ echo $object->read(13, 0) . PHP_EOL;
 
 ### Async operations and completions
 
-Many IO operations can be performed asynchronously. Asynchronous operations return a
-[`OperationCompletion`](src/Completion/OperationCompletion.php) object, which can be 
-used to track the status of the operation and to wait for its completion.
+Many IO operations can be performed asynchronously. Asynchronous operations return 
+an [`OperationCompletion`](src/Completion/OperationCompletion.php) object, which can be used to track the status of 
+the operation and to wait for its completion.
 
 ```php
 $completion = $object->writeFullAsync("Hello, World");
