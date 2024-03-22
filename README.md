@@ -4,6 +4,7 @@ An object oriented PHP library for using librados with FFI.
 ## Requirements
 - Linux
 - PHP 8.1 or later
+- php-ffi
 - librados
 
 ## Installation
