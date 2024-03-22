@@ -264,8 +264,8 @@ Methods marked as `@internal` are not part of the public API and should not be c
 
 ## License
 
-php-rados-ffi - PHP library for Ceph RADOS using FFI
-Copyright (C) 2024 Aternos GmbH
+php-rados-ffi - PHP library for Ceph RADOS using FFI  
+Copyright (C) 2024 Aternos GmbH  
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -281,8 +281,8 @@ Documentation comments in this library are derived from documentation comments f
 The file includes/librados.h is generated from librados.h, which is part of Ceph.
 Source code for Ceph is available at https://github.com/ceph/ceph
 
-Ceph - scalable distributed file system
-Copyright (C) 2004-2012 Sage Weil <sage@newdream.net>
+Ceph - scalable distributed file system  
+Copyright (C) 2004-2012 Sage Weil <sage@newdream.net>  
 
 This is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public

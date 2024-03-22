@@ -15,7 +15,7 @@ The source code for these files can be found at https://github.com/ceph/ceph
     This is free software; you can redistribute it and/or
     modify it under the terms of the GNU Lesser General Public
     License version 2.1, as published by the Free Software
-    Foundation.  See file LICENSE-LGPL2.1.
+    Foundation.  See file LICENSE.
 */
 
 
