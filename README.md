@@ -233,11 +233,11 @@ try {
 }
 ```
 
-### Available Rados features
+## Available Rados features
 This library aims to implement the full librados API. 
 There are, however, some features can't be implemented due to limitations in PHP's FFI system.
 
-#### Not planned
+### Not planned
 - Callback functions for completions
 - Watch/Notify
 - Log callbacks
@@ -247,17 +247,44 @@ but they can only be called (more or less) safely from the main thread.
 Since both completions and watches can be called from any thread,
 using PHP callback functions is not feasible.
 
-#### Implemented, but not really supported
+### Implemented, but not really supported
 Some librados features are poorly documented to a point where I do not understand what they are supposed to do.
 These features have bindings in this librery, but I can't guarantee that they work as intended.
 Currently, this includes:
 - Self-managed snapshots
 - rados_(un)set_pool_full_try
 
-### How to not segfault
+## How to not segfault
 
 The library uses FFI to call into the librados shared library. 
 To avoid crashes from incorrect usage of librados, only call methods and constructors 
 that are `public` and not marked as `@internal` in the source code.
 
 Methods marked as `@internal` are not part of the public API and should not be called directly.
+
+## License
+
+php-rados-ffi - PHP library for Ceph RADOS using FFI
+Copyright (C) 2024 Aternos GmbH
+
+This is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License version 2.1, as published by the Free Software
+Foundation.  See file LICENSE.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+Documentation comments in this library are derived from documentation comments from librados.
+The file includes/librados.h is generated from librados.h, which is part of Ceph.
+Source code for Ceph is available at https://github.com/ceph/ceph
+
+Ceph - scalable distributed file system
+Copyright (C) 2004-2012 Sage Weil <sage@newdream.net>
+
+This is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License version 2.1, as published by the Free Software
+Foundation.  See file LICENSE.
