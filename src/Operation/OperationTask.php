@@ -34,7 +34,7 @@ abstract class OperationTask
      *
      * @return T
      */
-    public function getResult(): mixed
+    public function getResult()
     {
         if (!$this->resultParsed) {
             $this->parsedResult = $this->parseResult();

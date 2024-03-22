@@ -10,6 +10,7 @@ use Countable;
 use FFI;
 use FFI\CData;
 use Iterator;
+use RuntimeException;
 
 /**
  * Class OMapIterator
@@ -26,10 +27,12 @@ class OMapIterator extends WrappedType implements Iterator, Countable
     /**
      * @param CData $data
      * @param FFI $ffi
+     * @throws RadosException
      */
     public function __construct(CData $data, FFI $ffi)
     {
         parent::__construct($data, $ffi);
+        $this->next();
     }
 
     /**
@@ -65,12 +68,11 @@ class OMapIterator extends WrappedType implements Iterator, Countable
 
     /**
      * @inheritDoc
-     * @throws RadosException
      */
     public function current(): ?string
     {
-        if ($this->current === null && !$this->end) {
-            $this->next();
+        if ($this->current === null) {
+            throw new RuntimeException("Cannot get value from invalid iterator");
         }
         return $this->current->getValue();
     }
@@ -89,12 +91,11 @@ class OMapIterator extends WrappedType implements Iterator, Countable
 
     /**
      * @inheritDoc
-     * @throws RadosException
      */
     public function key(): string
     {
-        if ($this->current === null && !$this->end) {
-            $this->next();
+        if ($this->current === null) {
+            throw new RuntimeException("Cannot get key from invalid iterator");
         }
         return $this->current->getKey();
     }

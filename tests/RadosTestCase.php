@@ -24,7 +24,8 @@ abstract class RadosTestCase extends TestCase
         if (isset(static::$pools[static::class])) {
             try {
                 static::$pools[static::class]->delete();
-            } catch (Exception) {
+            } catch (Exception $e) {
+                echo "Test pool could not be deleted: " . $e->getMessage() . "\n";
             }
         }
     }

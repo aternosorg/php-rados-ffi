@@ -16,8 +16,8 @@ use FFI;
 class OMapRemoveKeyRangeTask extends WriteOperationTask
 {
     /**
-     * @param string $startKey - lower bound of the key range to remove
-     * @param string $endKey - upper bound of the key range to remove
+     * @param string $startKey - lower bound of the key range to remove (inclusive)
+     * @param string $endKey - upper bound of the key range to remove (non-inclusive)
      */
     public function __construct(
         protected string $startKey,

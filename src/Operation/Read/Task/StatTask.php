@@ -7,6 +7,7 @@ use Aternos\Rados\Exception\RadosException;
 use Aternos\Rados\Exception\RadosObjectException;
 use Aternos\Rados\Operation\Operation;
 use Aternos\Rados\Operation\Read\ReadOperationTask;
+use Aternos\Rados\Util\TimeSpec;
 use FFI;
 use FFI\CData;
 use RuntimeException;
@@ -32,7 +33,7 @@ class StatTask extends ReadOperationTask
         RadosObjectException::handle($this->result->cdata);
         return new ObjectStat(
             $this->size->cdata,
-            $this->mTime->cdata
+            TimeSpec::fromCData($this->mTime)
         );
     }
 
@@ -44,9 +45,9 @@ class StatTask extends ReadOperationTask
     {
         $this->result = $operation->getFFI()->new('int');
         $this->size = $operation->getFFI()->new('uint64_t');
-        $this->mTime = $operation->getFFI()->new('time_t');
+        $this->mTime = $operation->getFFI()->new('struct timespec');
 
-        $operation->getFFI()->rados_read_op_stat(
+        $operation->getFFI()->rados_read_op_stat2(
             $operation->getCData(),
             FFI::addr($this->size),
             FFI::addr($this->mTime),

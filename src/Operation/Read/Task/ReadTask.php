@@ -19,6 +19,11 @@ class ReadTask extends ReadOperationTask
     protected ?CData $bytesRead = null;
     protected ?CData $result = null;
 
+    /**
+     * @param int $length - Number of bytes to read
+     * @param int $offset - Offset to read from
+     * @param Buffer|null $readBuffer - Buffer to read into. If not provided or too small, a new buffer will be created
+     */
     public function __construct(
         protected int $length,
         protected int $offset,
@@ -47,6 +52,7 @@ class ReadTask extends ReadOperationTask
     protected function initTask(Operation $operation): void
     {
         $this->result = $operation->getFFI()->new('int');
+        $this->bytesRead = $operation->getFFI()->new('size_t');
 
         if ($this->readBuffer === null || $this->readBuffer->getSize() < $this->length) {
             $this->readBuffer = Buffer::create($operation->getFFI(), $this->length);

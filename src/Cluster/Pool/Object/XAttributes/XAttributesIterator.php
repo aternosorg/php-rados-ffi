@@ -9,6 +9,7 @@ use Aternos\Rados\Util\WrappedType;
 use FFI;
 use FFI\CData;
 use Iterator;
+use RuntimeException;
 
 /**
  * Class XAttributes
@@ -24,10 +25,12 @@ class XAttributesIterator extends WrappedType implements Iterator
     /**
      * @param CData $data
      * @param FFI $ffi
+     * @throws RadosException
      */
     public function __construct(CData $data, FFI $ffi)
     {
         parent::__construct($data, $ffi);
+        $this->next();
     }
 
     /**
@@ -62,12 +65,11 @@ class XAttributesIterator extends WrappedType implements Iterator
 
     /**
      * @inheritDoc
-     * @throws RadosException
      */
     public function current(): string
     {
-        if ($this->current === null && !$this->end) {
-            $this->next();
+        if ($this->current === null) {
+            throw new RuntimeException("Cannot get value from invalid iterator");
         }
         return $this->current->getValue();
     }
@@ -86,12 +88,11 @@ class XAttributesIterator extends WrappedType implements Iterator
 
     /**
      * @inheritDoc
-     * @throws RadosException
      */
     public function key(): string
     {
-        if ($this->current === null && !$this->end) {
-            $this->next();
+        if ($this->current === null) {
+            throw new RuntimeException("Cannot get key from invalid iterator");
         }
         return $this->current->getKey();
     }
