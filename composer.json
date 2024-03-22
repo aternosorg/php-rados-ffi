@@ -1,5 +1,5 @@
 {
-    "name": "aternos/php-rados-ffi",
+    "name": "aternos/rados-ffi",
     "description": "An object oriented PHP library for using librados with FFI",
     "type": "library",
     "bin": ["bin/generate-headers"],
