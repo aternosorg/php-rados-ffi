@@ -12,6 +12,18 @@ An object oriented PHP library for using librados with FFI.
 composer require aternos/rados-ffi
 ```
 
+## Why not phprados?
+
+The [phprados](https://github.com/ceph/phprados) extension is a native 
+PHP extension that provides bindings to librados. Unfortunately, it has been
+largely unmaintained for the past few years. While it does compile for the latest version of PHP,
+many of the included rados functions [do not work as intended and can cause crashes](https://github.com/ceph/phprados/pull/35).
+Additionally, phprados only adds bindings for a small subset of the librados API.
+
+php-rados-ffi provides a modern, object-oriented, and complete interface to librados using PHP's FFI system.
+Through FFI, PHP can load shared libraries like librados and call their functions directly.
+This allows using librados without a native PHP extension, making it easier to install and safer to update.
+
 ## Usage
 
 Before the library can be used, the librados shared library must be loaded.
