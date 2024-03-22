@@ -249,7 +249,7 @@ using PHP callback functions is not feasible.
 
 ### Implemented, but not really supported
 Some librados features are poorly documented to a point where I do not understand what they are supposed to do.
-These features have bindings in this librery, but I can't guarantee that they work as intended.
+These features have bindings in this library, but I can't guarantee that they work as intended.
 Currently, this includes:
 - Self-managed snapshots
 - rados_(un)set_pool_full_try
