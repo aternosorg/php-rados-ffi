@@ -180,45 +180,45 @@ Operations can also be executed asynchronously, using the `operateAsync()` metho
 
 ##### Common
 
-- `AssertExistsTask`
-- `AssertVersionTask`
-- `CompareExtTask`
-- `CompareXAttributeTask`
-- `OMapCompareTask`
+- [`AssertExistsTask`](src/Operation/Common/Task/AssertExistsTask.php)
+- [`AssertVersionTask`](src/Operation/Common/Task/AssertVersionTask.php)
+- [`CompareExtTask`](src/Operation/Common/Task/CompareExtTask.php)
+- [`CompareXAttributeTask`](src/Operation/Common/Task/CompareXAttributeTask.php)
+- [`OMapCompareTask`](src/Operation/Common/Task/OMapCompareTask.php)
 
 ##### Read
 
-- `ChecksumTask`
-- `ExecuteTask` (with output data)
-- `GetXAttributesTask`
-- `OMapGetByKeysTask`
-- `OMapGetKeysTask`
-- `OMapGetTask`
-- `ReadTask`
-- `StatTask`
+- [`ChecksumTask`](src/Operation/Read/Task/ChecksumTask.php)
+- [`ExecuteTask`](src/Operation/Read/Task/ExecuteTask.php) (with output data)
+- [`GetXAttributesTask`](src/Operation/Read/Task/GetXAttributesTask.php)
+- [`OMapGetByKeysTask`](src/Operation/Read/Task/OMapGetByKeysTask.php)
+- [`OMapGetKeysTask`](src/Operation/Read/Task/OMapGetKeysTask.php)
+- [`OMapGetTask`](src/Operation/Read/Task/OMapGetTask.php)
+- [`ReadTask`](src/Operation/Read/Task/ReadTask.php)
+- [`StatTask`](src/Operation/Read/Task/StatTask.php)
 
 ##### Write
 
-- `AppendTask`
-- `CreateObjectTask`
-- `ExecuteTask` (without output data)
-- `OMapClearTask`
-- `OMapRemoveKeyRangeTask`
-- `OMapRemoveKeysTask`
-- `OMapSetTask`
-- `RemoveTask`
-- `RemoveXAttributeTask`
-- `SetAllocHintTask`
-- `SetXAttributeTask`
-- `TruncateTask`
-- `WriteFullTask`
-- `WriteSameTask`
-- `WriteTask`
-- `ZeroTask`
+- [`AppendTask`](src/Operation/Write/Task/AppendTask.php)
+- [`CreateObjectTask`](src/Operation/Write/Task/CreateObjectTask.php)
+- [`ExecuteTask`](src/Operation/Write/Task/ExecuteTask.php) (without output data)
+- [`OMapClearTask`](src/Operation/Write/Task/OMapClearTask.php)
+- [`OMapRemoveKeyRangeTask`](src/Operation/Write/Task/OMapRemoveKeyRangeTask.php)
+- [`OMapRemoveKeysTask`](src/Operation/Write/Task/OMapRemoveKeysTask.php)
+- [`OMapSetTask`](src/Operation/Write/Task/OMapSetTask.php)
+- [`RemoveTask`](src/Operation/Write/Task/RemoveTask.php)
+- [`RemoveXAttributeTask`](src/Operation/Write/Task/RemoveXAttributeTask.php)
+- [`SetAllocHintTask`](src/Operation/Write/Task/SetAllocHintTask.php)
+- [`SetXAttributeTask`](src/Operation/Write/Task/SetXAttributeTask.php)
+- [`TruncateTask`](src/Operation/Write/Task/TruncateTask.php)
+- [`WriteFullTask`](src/Operation/Write/Task/WriteFullTask.php)
+- [`WriteSameTask`](src/Operation/Write/Task/WriteSameTask.php)
+- [`WriteTask`](src/Operation/Write/Task/WriteTask.php)
+- [`ZeroTask`](src/Operation/Write/Task/ZeroTask.php)
 
 ### Exceptions and error handling
 
-If a Rados operation fails, it will throw a [`RadosException`](src/Exception/RadosException.php)
+If a Rados operation fails, it will throw a [`RadosException`](src/Exception/RadosException.php).  
 The error code returned from librados can be obtained using the `getCode()` method.
 
 To check whether an error has a specific error code, the `is()` method can be used.
