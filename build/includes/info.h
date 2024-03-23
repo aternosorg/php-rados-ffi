@@ -20,5 +20,5 @@ The source code for these files can be found at https://github.com/ceph/ceph
 
 
 #define FFI_SCOPE "PHP_RADOS_FFI"
-#define FFI_LIB "librados.so"
+#define FFI_LIB "librados.so.2"
 

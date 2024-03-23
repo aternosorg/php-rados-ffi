@@ -74,7 +74,7 @@ class Rados
             return $this;
         }
 
-        $this->ffi = FFI::cdef($this->readHeaders(), "librados.so");
+        $this->ffi = FFI::cdef($this->readHeaders(), "librados.so.2");
         $this->initialized = true;
         return $this;
     }
