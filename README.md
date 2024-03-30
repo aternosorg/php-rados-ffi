@@ -111,7 +111,7 @@ echo $object->read(13, 0) . PHP_EOL;
 ### Async operations and completions
 
 Many IO operations can be performed asynchronously. Asynchronous operations return 
-an [`OperationCompletion`](src/Completion/OperationCompletion.php) object, which can be used to track the status of 
+an [`ResultCompletion`](src/Completion/ResultCompletion.php) object, which can be used to track the status of 
 the operation and to wait for its completion.
 
 ```php
