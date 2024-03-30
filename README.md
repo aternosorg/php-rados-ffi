@@ -131,6 +131,11 @@ $completion->waitForComplete();
 $completion->isComplete(); // true
 ```
 
+Completions can be canceled by calling the `cancel()` method.
+```php
+$completion->cancel();
+```
+
 The result of the operation can be obtained using the `getResult()` method. The type
 of the result depends on the operation that was performed.
 ```php
