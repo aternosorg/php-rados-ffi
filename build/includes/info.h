@@ -1,3 +1,6 @@
+#define FFI_SCOPE "PHP_RADOS_FFI"
+#define FFI_LIB "librados.so.2"
+
 /*
 This file is generated, do not modify it directly!
 To generate this file, run `./bin/generate-headers`, or `./vendor/bin/generate-headers`
@@ -18,7 +21,4 @@ The source code for these files can be found at https://github.com/ceph/ceph
     Foundation.  See file LICENSE.
 */
 
-
-#define FFI_SCOPE "PHP_RADOS_FFI"
-#define FFI_LIB "librados.so.2"
 

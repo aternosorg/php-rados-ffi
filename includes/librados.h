@@ -1,9 +1,12 @@
+#define FFI_SCOPE "PHP_RADOS_FFI"
+#define FFI_LIB "librados.so.2"
+
 /*
 This file is generated, do not modify it directly!
 To generate this file, run `./bin/generate-headers`, or `./vendor/bin/generate-headers`
 if this was installed as a dependency using composer.
 
-GENERATED ON 2024-03-23 12:54:43
+GENERATED ON 2024-04-08 13:41:20
 
 This file is generated from librados.h and rados_types.h,
 available in the librados-dev package installed when this was generated.
@@ -18,9 +21,6 @@ The source code for these files can be found at https://github.com/ceph/ceph
     Foundation.  See file LICENSE.
 */
 
-
-#define FFI_SCOPE "PHP_RADOS_FFI"
-#define FFI_LIB "librados.so.2"
 
 typedef long int time_t;
 typedef long int suseconds_t;
