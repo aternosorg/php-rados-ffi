@@ -105,7 +105,7 @@ abstract class WrappedType
      */
     public final function release(): static
     {
-        if (!$this->isReleased() || $this->isBeingReleased) {
+        if ($this->isReleased() || $this->isBeingReleased) {
             return $this;
         }
         $this->isBeingReleased = true;
